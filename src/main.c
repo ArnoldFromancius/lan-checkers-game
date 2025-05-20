@@ -4,6 +4,7 @@
 #define BOARD_SIZE 8
 #define DARKBROWN (Color){139, 69, 19, 255}
 #define SILVER (Color){80, 30, 200, 155}
+#define PIECE_RADIUS_FACTOR 0.4f
 
 int main(void) {
     SetConfigFlags(FLAG_FULLSCREEN_MODE);  // Always fullscreen
@@ -32,11 +33,20 @@ int main(void) {
         for (int row = 0; row < BOARD_SIZE; row++) {
             for (int col = 0; col < BOARD_SIZE; col++) {
                 Color squareColor = ((row + col) % 2 == 0) ? LIGHTGRAY : DARKBROWN;
-            	DrawRectangle(offsetX + col * cellSize, offsetY + row * cellSize, cellSize, cellSize, squareColor);
-
+            	int x=offsetX + col * cellSize;
+		int y=offsetY + row * cellSize;
+		DrawRectangle(x, y, cellSize, cellSize, squareColor);
+		
+		// Piece logic (only draw on dark squares)
+                if ((row + col) % 2 != 0) {
+                    if (row < 3) {
+                        DrawCircle(x + cellSize / 2, y + cellSize / 2, cellSize * PIECE_RADIUS_FACTOR, RED);
+                    } else if (row >= 5) {
+                        DrawCircle(x + cellSize / 2, y + cellSize / 2, cellSize * PIECE_RADIUS_FACTOR, BLACK);
+                    }
+                }
 	    }
         }
-
         EndDrawing();
     }
 

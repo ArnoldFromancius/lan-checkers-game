@@ -10,8 +10,8 @@ else ifeq ($(UNAME_S), Windows)
 endif
 
 #Setup Target
-TARGET = ./src/game
-SRC = ./src/main.c
+TARGET = ./bin/game
+SRC = ./src/main.c ./src/render.c ./src/game_logic.c 
 
 #Build Target
 $(TARGET): $(SRC)

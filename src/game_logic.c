@@ -30,24 +30,46 @@ void initBoard(int Board[BOARD_SIZE][BOARD_SIZE]){
 
 }
 
-void boxClicked(int col, int row, int Board[BOARD_SIZE][BOARD_SIZE]){
+void boxClicked(int col, int row, int *sPFlag, int *sPRow, int *sPCol, int Board[BOARD_SIZE][BOARD_SIZE]){
     // When a box is clicked
     if (row >= 0 && row < BOARD_SIZE && col >= 0 && col < BOARD_SIZE)
     {
         // Check if clicked on a piece
-        if(Board[row][col] == 1){ //clicked on a P1 pawn
+        if(*sPFlag== P1_PAWN){ //clicked on a P1 pawn
+            *sPFlag = P1_PAWN;
+            *sPRow = row;
+            *sPCol = col;
 
-            piece_selected = true;
-        }else if(Board[row][col] == 2){ //clicked on P2 pawn
+        }else if(*sPFlag == P2_PAWN){ //clicked on P2 pawn
+            *sPFlag = P2_PAWN;
+            *sPRow = row;
+            *sPCol = col;
 
-            piece_selected = true;
         }//clicked on empty box
         else{ 
             //Move selected piece to the box clicked
-            if(piece_selected){
+            //check if P1 or P2 piece is selected
+            if(*sPFlag == P1_PAWN){   //P1 pawn selected
+                //movements are upwards 
+                if(((*sPRow)-1 == row)&&(((*sPCol)-1)==col) ||
+                   ((*sPRow)-1 == row)&&(((*sPCol)+1)==col)
+                ){
+                    Board[*sPRow][*sPCol] = EMPTY_BOX;
+                    Board[row][col] = P1_PAWN;
+                    printf("%d %d",*sPRow,*sPCol);
+                }
                 
-                piece_selected = false;
+            }else if(*sPFlag == P2_PAWN){ //P2 pawn selected
+                //movements are downwards  
+                if(((*sPRow)+1 == row)&&(((*sPCol)-1)==col) ||
+                   ((*sPRow)+1 == row)&&(((*sPCol)+1)==col)
+                ){
+                    Board[*sPRow][*sPCol] = EMPTY_BOX;
+                    Board[row][col] = P2_PAWN;
+                    printf("%d %d",*sPRow,*sPCol);
+                }  
             }
+            *sPFlag = 0;
         }
         
     }

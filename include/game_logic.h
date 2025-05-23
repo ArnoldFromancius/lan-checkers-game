@@ -13,5 +13,10 @@ void initBoard(int [BOARD_SIZE][BOARD_SIZE]);
 
 void boxClicked(int col, int row, int *sPFlag, int *sPRow, int *sPCol, int Board[BOARD_SIZE][BOARD_SIZE]);
 
+int getPieceDirection(int piece);
+
+int isValidMove(int fromRow, int fromCol, int toRow, int toCol, int piece);
+
+int isValidJump(int fromRow, int fromCol, int toRow, int toCol, int piece, int Board[BOARD_SIZE][BOARD_SIZE]);
 
 #endif

@@ -4,7 +4,8 @@
 static FILE *log_file = NULL;
 
 static void open_log_file() {
-    if (!log_file) {
+     if (!DEBUG_MODE) return;
+     if (!log_file) {
         log_file = fopen("./debug/debug.log", "a");
         if (!log_file) {
             fprintf(stderr, "LOGGING ERROR: Could not open debug.log\n");
@@ -13,6 +14,7 @@ static void open_log_file() {
 }
 
 static void log_prefix(const char *level) {
+    if (!DEBUG_MODE) return;
     if (!log_file) return;
     time_t now = time(NULL);
     struct tm *t = localtime(&now);
@@ -21,6 +23,7 @@ static void log_prefix(const char *level) {
 }
 
 static void log_write(const char *level, const char *fmt, va_list args) {
+    if (!DEBUG_MODE) return;
     open_log_file();
     if (!log_file) return; // <- fail safely if file couldn't open
 
@@ -32,6 +35,7 @@ static void log_write(const char *level, const char *fmt, va_list args) {
 
 
 void log_info(const char *fmt, ...) {
+    if (!DEBUG_MODE) return;
     va_list args;
     va_start(args, fmt);
     log_write("INFO", fmt, args);
@@ -39,6 +43,7 @@ void log_info(const char *fmt, ...) {
 }
 
 void log_warn(const char *fmt, ...) {
+    if (!DEBUG_MODE) return;
     va_list args;
     va_start(args, fmt);
     log_write("WARN", fmt, args);
@@ -46,6 +51,7 @@ void log_warn(const char *fmt, ...) {
 }
 
 void log_error(const char *fmt, ...) {
+    if (!DEBUG_MODE) return;
     va_list args;
     va_start(args, fmt);
     log_write("ERROR", fmt, args);
@@ -54,6 +60,7 @@ void log_error(const char *fmt, ...) {
 
 
 void log_board_state(int board[BOARD_SIZE][BOARD_SIZE]) {
+    if (!DEBUG_MODE) return;
     log_info("[BOARD STATE]");
     for (int row = 0; row < BOARD_SIZE; row++) {
         char line[256] = {0}; // Enough for one row

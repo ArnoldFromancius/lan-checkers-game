@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include<stdlib.h>
 #include "../include/game_logic.h"
+#include "../include/log.h"
 
 void initBoard(int Board[BOARD_SIZE][BOARD_SIZE]){
     int row=0,col;
@@ -30,6 +31,7 @@ void initBoard(int Board[BOARD_SIZE][BOARD_SIZE]){
     }
 
 }
+
 /*
 void boxClicked(int col, int row, int *sPFlag, int *sPRow, int *sPCol, int Board[BOARD_SIZE][BOARD_SIZE]){
     // When a box is clicked
@@ -76,7 +78,12 @@ void boxClicked(int col, int row, int *sPFlag, int *sPRow, int *sPCol, int Board
 }
 */
 
-void boxClicked(int col, int row, int *sPFlag, int *sPRow, int *sPCol, int Board[BOARD_SIZE][BOARD_SIZE]) {
+void boxClicked(int row, int col, int *sPFlag, int *sPRow, int *sPCol, int Board[BOARD_SIZE][BOARD_SIZE]) {
+    //for debugging purposed
+    log_info("\n#BOX_CLICKED -");
+    log_info("$highlighted_Piece: flag: %d row: %d col: %d",*sPFlag,*sPRow,*sPCol);
+    log_info("$selected_piece: row: %d col: %d",row,col);
+
     if (row < 0 || row >= BOARD_SIZE || col < 0 || col >= BOARD_SIZE)
         return;
 
@@ -116,8 +123,8 @@ void boxClicked(int col, int row, int *sPFlag, int *sPRow, int *sPCol, int Board
 }
 
 int getPieceDirection(int piece) {
-    if (piece == P1_PAWN) return -1; // P1 moves up
-    if (piece == P2_PAWN) return 1;  // P2 moves down
+    if (piece == P1_PAWN) return 1; // P1 moves down
+    if (piece == P2_PAWN) return -1;  // P2 moves up
     return 0; // kings handled separately
 }
 

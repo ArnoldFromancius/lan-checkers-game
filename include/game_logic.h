@@ -11,7 +11,7 @@
 
 void initBoard(int [BOARD_SIZE][BOARD_SIZE]);
 
-void boxClicked(int col, int row, int *sPFlag, int *sPRow, int *sPCol, int Board[BOARD_SIZE][BOARD_SIZE]);
+void boxClicked(int row, int col, int *sPFlag, int *sPRow, int *sPCol, int Board[BOARD_SIZE][BOARD_SIZE]);
 
 int getPieceDirection(int piece);
 

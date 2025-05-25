@@ -1,5 +1,7 @@
 #Compiler setup
 CC = gcc
+#Debugger setup
+DD = gdb -tui
 
 # Detect Platform And Use Appropriate Flags
 UNAME_S := $(shell uname -s)
@@ -11,7 +13,7 @@ endif
 
 #Setup Target
 TARGET = ./bin/game
-SRC = ./src/main.c ./src/render.c ./src/game_logic.c 
+SRC = ./src/main.c ./src/render.c ./src/game_logic.c ./src/log.c
 
 #Build Target
 $(TARGET): $(SRC)
@@ -29,3 +31,8 @@ run: $(TARGET)
 #Cleanup Project
 clean: 
 	rm -f $(TARGET)
+
+#Debug Project 
+debug: $(TARGET)
+	$(DD) $(TARGET)
+

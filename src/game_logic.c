@@ -159,26 +159,19 @@ int isValidJump(int fromRow, int fromCol, int toRow, int toCol, int piece, int B
         int midCol = (fromCol + toCol) / 2;
         int middlePiece = Board[midRow][midCol];
 
-        if (piece == P1_PAWN || piece == P1_KING) {
-            if (middlePiece == P2_PAWN || middlePiece == P2_KING) {
-                if (piece == P1_KING || dRow == 2) {
-                    log_info("#isValidJump_TRUE for P1");
-                    return 1;
-                }
-            }
+        // P1 captures P2
+        if ((piece == P1_PAWN || piece == P1_KING) &&
+            (middlePiece == P2_PAWN || middlePiece == P2_KING)) {
+            return 1;  // allow any jump direction
         }
 
-        if (piece == P2_PAWN || piece == P2_KING) {
-            if (middlePiece == P1_PAWN || middlePiece == P1_KING) {
-                if (piece == P2_KING || dRow == -2) {
-                    log_info("#isValidJump_TRUE for P2");
-                    return 1;
-                }
-            }
+        // P2 captures P1
+        if ((piece == P2_PAWN || piece == P2_KING) &&
+            (middlePiece == P1_PAWN || middlePiece == P1_KING)) {
+            return 1;  // allow any jump direction
         }
     }
 
-    log_info("#isValidJump_FALSE");
     return 0;
 }
 

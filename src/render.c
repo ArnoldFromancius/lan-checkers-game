@@ -49,7 +49,7 @@ void drawPieces(int offsetX, int offsetY, int cellSize, int selectedRow, int sel
             // This draws a yellow outline when a piece is selected
             if (row == selectedRow && col == selectedCol)
             {
-                if ( Board[row][col] == P1_PAWN || Board[row][col] == P2_KING )
+                if ( Board[row][col] == P1_PAWN || Board[row][col] == P1_KING )
                 {
                     DrawRectangleLinesEx((Rectangle){x + 2, y + 2, cellSize - 4, cellSize - 4}, 4, PINK);
                 }else if( Board[row][col] == P2_PAWN || Board[row][col] == P2_KING ){

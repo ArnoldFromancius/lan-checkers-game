@@ -13,6 +13,8 @@ void initBoard(int [BOARD_SIZE][BOARD_SIZE]);
 
 void boxClicked(int row, int col, int *sPFlag, int *sPRow, int *sPCol, int Board[BOARD_SIZE][BOARD_SIZE]);
 
+int checkWinCondition(int Board[BOARD_SIZE][BOARD_SIZE]);
+
 int getPieceDirection(int piece);
 
 int isValidMove(int fromRow, int fromCol, int toRow, int toCol, int piece);
@@ -21,5 +23,12 @@ int isValidJump(int fromRow, int fromCol, int toRow, int toCol, int piece, int B
 
 int hasMoreJumps(int row, int col, int piece, int Board[BOARD_SIZE][BOARD_SIZE]);
 
+int hasValidMoves(int player, int Board[BOARD_SIZE][BOARD_SIZE]);
+
+int countPieces(int player, int Board[BOARD_SIZE][BOARD_SIZE]);
+
 void tryPromoteToKing(int row, int col, int Board[BOARD_SIZE][BOARD_SIZE]);
+
+void resetGame(int Board[BOARD_SIZE][BOARD_SIZE], int *sPFlag, int *sPRow, int *sPCol);
+
 #endif

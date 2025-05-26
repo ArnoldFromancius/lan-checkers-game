@@ -133,6 +133,21 @@ void boxClicked(int row, int col, int *sPFlag, int *sPRow, int *sPCol, int Board
     }
 }
 
+int checkWinCondition(int Board[BOARD_SIZE][BOARD_SIZE]) {
+    int p1HasPieces = countPieces(1, Board);
+    int p2HasPieces = countPieces(2, Board);
+    int p1HasMoves = hasValidMoves(1, Board);
+    int p2HasMoves = hasValidMoves(2, Board);
+
+    if (p2HasPieces == 0 || p2HasMoves == 0) {
+        return 1; // Player 1 wins
+    } else if (p1HasPieces == 0 || p1HasMoves == 0) {
+        return 2; // Player 2 wins
+    }
+
+    return 0; // No winner yet
+}
+
 int getPieceDirection(int piece) {
     if (piece == P1_PAWN) return 1; // P1 moves down
     if (piece == P2_PAWN) return -1;  // P2 moves up
@@ -198,6 +213,55 @@ int hasMoreJumps(int row, int col, int piece, int Board[BOARD_SIZE][BOARD_SIZE])
     return 0;
 }
 
+int hasValidMoves(int player, int Board[BOARD_SIZE][BOARD_SIZE]) {
+    for (int row = 0; row < BOARD_SIZE; row++) {
+        for (int col = 0; col < BOARD_SIZE; col++) {
+            int piece = Board[row][col];
+
+            if ((player == 1 && (piece == P1_PAWN || piece == P1_KING)) ||
+                (player == 2 && (piece == P2_PAWN || piece == P2_KING))) {
+
+                for (int dr = -2; dr <= 2; dr++) {
+                    for (int dc = -2; dc <= 2; dc++) {
+                        if (dr == 0 || dc == 0 || abs(dr) != abs(dc)) continue;
+                        int newRow = row + dr;
+                        int newCol = col + dc;
+
+                        if (newRow < 0 || newRow >= BOARD_SIZE || newCol < 0 || newCol >= BOARD_SIZE)
+                            continue;
+
+                        if (Board[newRow][newCol] != EMPTY_BOX)
+                            continue;
+
+                        if (abs(dr) == 1) {
+                            if (isValidMove(row, col, newRow, newCol, piece))
+                                return 1;
+                        } else if (abs(dr) == 2) {
+                            if (isValidJump(row, col, newRow, newCol, piece, Board))
+                                return 1;
+                        }
+                    }
+                }
+            }
+        }
+    }
+    return 0;
+}
+
+int countPieces(int player, int Board[BOARD_SIZE][BOARD_SIZE]) {
+    int count = 0;
+    for (int row = 0; row < BOARD_SIZE; row++) {
+        for (int col = 0; col < BOARD_SIZE; col++) {
+            int piece = Board[row][col];
+            if ((player == 1 && (piece == P1_PAWN || piece == P1_KING)) ||
+                (player == 2 && (piece == P2_PAWN || piece == P2_KING))) {
+                count++;
+            }
+        }
+    }
+    return count;
+}
+
 void tryPromoteToKing(int row, int col, int Board[BOARD_SIZE][BOARD_SIZE]) {
     int piece = Board[row][col];
     if (piece == P1_PAWN && row == 7) {
@@ -208,3 +272,12 @@ void tryPromoteToKing(int row, int col, int Board[BOARD_SIZE][BOARD_SIZE]) {
         log_info("#KINGING: P2 pawn at (%d, %d) promoted to KING", row, col);
     }
 }
+
+void resetGame(int Board[BOARD_SIZE][BOARD_SIZE], int *sPFlag, int *sPRow, int *sPCol) {
+    initBoard(Board);
+    *sPFlag = 0;
+    *sPRow = -1;
+    *sPCol = -1;
+    // Reset more state here if needed
+}
+

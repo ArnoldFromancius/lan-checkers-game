@@ -19,5 +19,7 @@ int isValidMove(int fromRow, int fromCol, int toRow, int toCol, int piece);
 
 int isValidJump(int fromRow, int fromCol, int toRow, int toCol, int piece, int Board[BOARD_SIZE][BOARD_SIZE]);
 
+int hasMoreJumps(int row, int col, int piece, int Board[BOARD_SIZE][BOARD_SIZE]);
+
 void tryPromoteToKing(int row, int col, int Board[BOARD_SIZE][BOARD_SIZE]);
 #endif

@@ -111,7 +111,7 @@ void boxClicked(int row, int col, int *sPFlag, int *sPRow, int *sPCol, int Board
             Board[fromRow][fromCol] = EMPTY_BOX;
             Board[toRow][toCol] = piece;
         }
-        else if (tmp=(isValidJump(fromRow, fromCol, toRow, toCol, piece, Board))) {
+        else if (isValidJump(fromRow, fromCol, toRow, toCol, piece, Board)) {
             int midRow = (fromRow + toRow) / 2;
             int midCol = (fromCol + toCol) / 2;
             Board[fromRow][fromCol] = EMPTY_BOX;
@@ -120,11 +120,16 @@ void boxClicked(int row, int col, int *sPFlag, int *sPRow, int *sPCol, int Board
             
         }
         tryPromoteToKing(toRow, toCol, Board);
-
-        log_info("#CALLINGValidJump returned: %d ",tmp);
-        *sPFlag = EMPTY_BOX;
-        *sPRow = -1;
-        *sPCol = -1;
+        // 👇 check for more jumps
+        if (hasMoreJumps(toRow, toCol, piece, Board)) {
+            *sPRow = toRow;
+            *sPCol = toCol;
+            *sPFlag = piece;
+        } else {
+            *sPRow = -1;
+            *sPCol = -1;
+            *sPFlag = EMPTY_BOX;
+        }
     }
 }
 
@@ -172,6 +177,24 @@ int isValidJump(int fromRow, int fromCol, int toRow, int toCol, int piece, int B
         }
     }
 
+    return 0;
+}
+
+int hasMoreJumps(int row, int col, int piece, int Board[BOARD_SIZE][BOARD_SIZE]) {
+    int dirs[4][2] = {
+        {-2, -2}, {-2, 2}, {2, -2}, {2, 2}
+    };
+
+    for (int i = 0; i < 4; i++) {
+        int newRow = row + dirs[i][0];
+        int newCol = col + dirs[i][1];
+
+        if (newRow >= 0 && newRow < BOARD_SIZE && newCol >= 0 && newCol < BOARD_SIZE) {
+            if (isValidJump(row, col, newRow, newCol, piece, Board)) {
+                return 1;
+            }
+        }
+    }
     return 0;
 }
 

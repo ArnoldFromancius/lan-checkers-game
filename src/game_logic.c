@@ -105,20 +105,24 @@ void boxClicked(int row, int col, int *sPFlag, int *sPRow, int *sPCol, int Board
         int toRow = row;
         int toCol = col;
         int piece = *sPFlag;
-
+        int tmp;
         if (isValidMove(fromRow, fromCol, toRow, toCol, piece)) {
+            log_info("#ValidMove");
             Board[fromRow][fromCol] = EMPTY_BOX;
             Board[toRow][toCol] = piece;
         }
-        else if (isValidJump(fromRow, fromCol, toRow, toCol, piece, Board)) {
+        else if (tmp=(isValidJump(fromRow, fromCol, toRow, toCol, piece, Board))) {
             int midRow = (fromRow + toRow) / 2;
             int midCol = (fromCol + toCol) / 2;
             Board[fromRow][fromCol] = EMPTY_BOX;
             Board[midRow][midCol] = EMPTY_BOX;
             Board[toRow][toCol] = piece;
+            
         }
-
+        log_info("#CALLINGValidJump returned: %d ",tmp);
         *sPFlag = EMPTY_BOX;
+        *sPRow = -1;
+        *sPCol = -1;
     }
 }
 
@@ -144,6 +148,7 @@ int isValidMove(int fromRow, int fromCol, int toRow, int toCol, int piece) {
 }
 
 int isValidJump(int fromRow, int fromCol, int toRow, int toCol, int piece, int Board[BOARD_SIZE][BOARD_SIZE]) {
+    log_info("#INSIDE_ValidJump");
     int dRow = toRow - fromRow;
     int dCol = toCol - fromCol;
 
@@ -152,21 +157,26 @@ int isValidJump(int fromRow, int fromCol, int toRow, int toCol, int piece, int B
         int midCol = (fromCol + toCol) / 2;
         int middlePiece = Board[midRow][midCol];
 
-        // Check opponent piece in the middle
         if (piece == P1_PAWN || piece == P1_KING) {
             if (middlePiece == P2_PAWN || middlePiece == P2_KING) {
-                if (piece == P1_KING) return 1;
-                return dRow == -2;
+                if (piece == P1_KING || dRow == 2) {
+                    log_info("#isValidJump_TRUE for P1");
+                    return 1;
+                }
             }
         }
+
         if (piece == P2_PAWN || piece == P2_KING) {
             if (middlePiece == P1_PAWN || middlePiece == P1_KING) {
-                if (piece == P2_KING) return 1;
-                return dRow == 2;
+                if (piece == P2_KING || dRow == -2) {
+                    log_info("#isValidJump_TRUE for P2");
+                    return 1;
+                }
             }
         }
     }
 
+    log_info("#isValidJump_FALSE");
     return 0;
 }
 

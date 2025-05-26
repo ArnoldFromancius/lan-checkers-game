@@ -69,7 +69,7 @@ int main(){
         //Display changes 
         ClearBackground(BACKGROUND_COLOR);
         drawBoard(offsetX, offsetY, cellSize, row, col, Board);
-        drawPieces(offsetX, offsetY, cellSize, row, col, Board);
+        drawPieces(offsetX, offsetY, cellSize, selectedPiece.row, selectedPiece.col, Board);
         
         EndDrawing();
     }

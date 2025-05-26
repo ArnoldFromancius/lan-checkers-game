@@ -119,6 +119,8 @@ void boxClicked(int row, int col, int *sPFlag, int *sPRow, int *sPCol, int Board
             Board[toRow][toCol] = piece;
             
         }
+        tryPromoteToKing(toRow, toCol, Board);
+
         log_info("#CALLINGValidJump returned: %d ",tmp);
         *sPFlag = EMPTY_BOX;
         *sPRow = -1;
@@ -180,3 +182,13 @@ int isValidJump(int fromRow, int fromCol, int toRow, int toCol, int piece, int B
     return 0;
 }
 
+void tryPromoteToKing(int row, int col, int Board[BOARD_SIZE][BOARD_SIZE]) {
+    int piece = Board[row][col];
+    if (piece == P1_PAWN && row == 7) {
+        Board[row][col] = P1_KING;
+        log_info("#KINGING: P1 pawn at (%d, %d) promoted to KING", row, col);
+    } else if (piece == P2_PAWN && row == 0) {
+        Board[row][col] = P2_KING;
+        log_info("#KINGING: P2 pawn at (%d, %d) promoted to KING", row, col);
+    }
+}

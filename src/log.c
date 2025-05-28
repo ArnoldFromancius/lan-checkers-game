@@ -33,7 +33,6 @@ static void log_write(const char *level, const char *fmt, va_list args) {
     fflush(log_file);
 }
 
-
 void log_info(const char *fmt, ...) {
     if (!DEBUG_MODE) return;
     va_list args;

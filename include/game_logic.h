@@ -8,6 +8,12 @@
 #define EMPTY_BOX 0
 #define BOARD_SIZE 8
 
+typedef enum {
+    MENU_STATE,
+    GAME_STATE,
+    // You can add LAN_WAIT_STATE or GAME_OVER_STATE later
+} GameState;
+
 
 void initBoard(int [BOARD_SIZE][BOARD_SIZE]);
 

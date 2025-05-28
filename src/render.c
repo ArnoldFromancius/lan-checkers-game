@@ -3,11 +3,6 @@
 #include "../include/render.h"
 #include "../include/game_logic.h"
 
-
-int startMenu(){
-
-}
-
 void drawBoard(int offsetX, int offsetY, int cellSize, int selectedRow, int selectedCol, int Board[BOARD_SIZE_T][BOARD_SIZE_T]){
 
     // Draw the board
@@ -60,4 +55,31 @@ void drawPieces(int offsetX, int offsetY, int cellSize, int selectedRow, int sel
     }
 }
 
-    
+void drawMenu(int selectedMenuOption) {
+    int screenWidth = GetScreenWidth(); // Replace with your actual screen width
+    int fontSizeTitle = 40;
+    int fontSizeItem = 20;
+
+    const char *title = "Classic Checkers";
+    const char *lanText = "VS LAN";
+    const char *cpuText = "VS CPU";
+    const char *instructions = "Use [UP↑] [DOWN↓] to select, ENTER to start";
+
+    // Centered title
+    int titleWidth = MeasureText(title, fontSizeTitle);
+    DrawText(title, (screenWidth - titleWidth) / 2, 100, fontSizeTitle, DARKGRAY);
+
+    // Menu options
+    Color lanColor = (selectedMenuOption == 0) ? RED : BLACK;
+    Color cpuColor = (selectedMenuOption == 1) ? RED : BLACK;
+
+    int lanWidth = MeasureText(lanText, fontSizeItem);
+    int cpuWidth = MeasureText(cpuText, fontSizeItem);
+
+    DrawText(lanText, (screenWidth - lanWidth) / 2, 200, fontSizeItem, lanColor);
+    DrawText(cpuText, (screenWidth - cpuWidth) / 2, 250, fontSizeItem, cpuColor);
+
+    // Instructions
+    int instrWidth = MeasureText(instructions, fontSizeItem);
+    DrawText(instructions, (screenWidth - instrWidth) / 2, 350, fontSizeItem, GRAY);
+}

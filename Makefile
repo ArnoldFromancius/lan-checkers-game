@@ -13,7 +13,7 @@ endif
 
 #Setup Target
 TARGET = ./bin/game
-SRC = ./src/main.c ./src/render.c ./src/game_logic.c ./src/log.c
+SRC = ./src/main.c ./src/render.c ./src/game_logic.c ./src/log.c ./src/audio.c
 
 #Build Target
 $(TARGET): $(SRC)

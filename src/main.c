@@ -3,6 +3,7 @@
 #include <raylib.h>
 #include "../include/game_logic.h"
 #include "../include/render.h"
+#include "../include/audio.h"
 #include "../include/log.h"
 
 int DEBUG_MODE = 0; // Set to 1 to enable debug logs
@@ -26,6 +27,13 @@ int main(){
 
     SetConfigFlags(FLAG_FULLSCREEN_MODE); // Always fullscreen
     InitWindow(0, 0, "Checkers");
+    InitGameAudio(); //intitialize audio
+    Music bgm = LoadMusicStream("assets/sounds/bg.mp3");
+    PlayMusicStream(bgm);
+
+    Texture2D background = LoadTexture("./assets/imgs/bg1.png");
+    Texture2D splashscreen = LoadTexture("./assets/imgs/splash.png");
+
     log_info("#MAIN_FUNC raylib_window_initialized...");
 
     //setup needed game parameters
@@ -49,23 +57,28 @@ int main(){
     int row=-1,col=-1;
     while (!WindowShouldClose())
     {
-            //Main menu
+        //play and loop song
+        UpdateMusicStream(bgm);
+        //Main menu
         if (currentState == MENU_STATE) {
             BeginDrawing();
             ClearBackground(RAYWHITE);
+            DrawTexture(splashscreen, 0, 0, WHITE);
             drawMenu(selectedMenuOption);
             EndDrawing();
-
             if (IsKeyPressed(KEY_DOWN)) {
                 selectedMenuOption = (selectedMenuOption + 1) % totalMenuOptions;
+                PlayMenuSoundMove();
             }
             if (IsKeyPressed(KEY_UP)) {
                 selectedMenuOption = (selectedMenuOption - 1 + totalMenuOptions) % totalMenuOptions;
+                PlayMenuSoundMove();
             }
 
             if (IsKeyPressed(KEY_ENTER)) {
                 gameMode = selectedMenuOption + 1;
                 currentState = GAME_STATE;
+                PlayMenuSoundSelect();
             }
 
         }else if(currentState == GAME_STATE){
@@ -107,8 +120,11 @@ int main(){
 
                 log_board_state(Board);   
             }
+
             //Display changes 
             ClearBackground(BACKGROUND_COLOR);
+            DrawTexture(background, 0, 0, WHITE);
+
             drawBoard(offsetX, offsetY, cellSize, row, col, Board);
             drawPieces(offsetX, offsetY, cellSize, selectedPiece.row, selectedPiece.col, Board);
             EndDrawing();
@@ -120,7 +136,8 @@ int main(){
             
         }
     }
-
+    UnloadMusicStream(bgm);
+    CloseAudioDevice();
     CloseWindow();
     return 0;
 }

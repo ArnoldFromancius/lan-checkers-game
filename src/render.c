@@ -141,29 +141,28 @@ void drawLanServerConnect() {
     DrawText(instructions, (screenWidth - instrWidth) / 2, 700, fontSizeItem, YELLOW);
 }
 
-void drawLanClientConnect() {
+void drawLanClientConnect(char clientIpBuffer[]) {
     int screenWidth = GetScreenWidth(); 
     int fontSizeTitle = 60;
     int fontSizeItem = 40;
 
-    const char *title = "HOSTiNG GAME";
-    const char *lanText = "Waiting for a client to connect...";
-    const char *cpuText = "Your IP: ";
-    const char *instructions = "Use [ESC] to Quit, [M] for Menu ";
+    const char *title = "Connect to server";
+    const char *lanText = "Enter server IP address...";
+    const char *instructions = "Use [ENTER], [ESC] to Quit, [M] for Menu ";
 
-    // Centered title
+    // title
     int titleWidth = MeasureText(title, fontSizeTitle);
     DrawText(title, (screenWidth - titleWidth) / 2, 350, fontSizeTitle, WHITE);
 
     // Menu options
 
     int lanWidth = MeasureText(lanText, fontSizeItem);
-    int cpuWidth = MeasureText(cpuText, fontSizeItem);
 
     DrawText(lanText, (screenWidth - lanWidth) / 2, 450, fontSizeItem, WHITE);
-    DrawText(cpuText, (screenWidth - cpuWidth) / 2, 500, fontSizeItem, WHITE);
+    DrawText(clientIpBuffer, ((screenWidth - lanWidth) / 2)+200, 520, fontSizeItem, PINK);
 
     // Instructions
     int instrWidth = MeasureText(instructions, fontSizeItem);
     DrawText(instructions, (screenWidth - instrWidth) / 2, 700, fontSizeItem, YELLOW);
+    
 }

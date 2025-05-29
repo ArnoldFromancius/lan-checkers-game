@@ -7,6 +7,7 @@
 #define P2_KING 4
 #define EMPTY_BOX 0
 #define BOARD_SIZE 8
+#define MAX_IP_LEN 32 //ip address
 
 typedef enum {
     MENU_STATE,

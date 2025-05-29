@@ -12,6 +12,6 @@ void drawPieces(int offsetX, int offsetY, int cellSize, int selectedRow, int sel
 void drawMenu(int selectedMenuOption);
 void drawLanMenu(int selectedMenuOption);
 void drawLanServerConnect(void);
-void drawLanClientConnect(void);
+void drawLanClientConnect(char ClientIpBuffer[]);
 
 #endif

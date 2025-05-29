@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include <string.h>
+#include <ctype.h>
 #include <raylib.h>
 #include "../include/game_logic.h"
 #include "../include/render.h"
@@ -16,6 +18,8 @@ int selectedLanOption = 0; // 0 = server, 1 = client
 bool isServer = false;
 const int totalMenuOptions = 2;
 
+//setup ip address input
+char clientIpBuffer[MAX_IP_LEN] = "127.0.0.1";
 
 //solution to track position of a selected piece. Struct to soon be used
 typedef struct Selection{
@@ -201,8 +205,34 @@ int main(){
                 BeginDrawing();
                 ClearBackground(RAYWHITE);
                 DrawTexture(splashscreen, 0, 0, WHITE);
-                drawLanClientConnect();
+                drawLanClientConnect(clientIpBuffer);
                 EndDrawing();
+
+                // Handle character input
+                int key = GetCharPressed();
+                int ipCursor = strlen(clientIpBuffer);
+                bool isTypingIp = true;   
+                while (key > 0) {
+                    if (ipCursor < MAX_IP_LEN - 1 && (key == '.' || isdigit(key))) {
+                        clientIpBuffer[ipCursor++] = (char)key;
+                        clientIpBuffer[ipCursor] = '\0';
+                    }
+                    key = GetCharPressed();
+                }
+
+                if (IsKeyPressed(KEY_BACKSPACE) && ipCursor > 0) {
+                    ipCursor--;
+                    clientIpBuffer[ipCursor] = '\0';
+                }
+
+                if (IsKeyPressed(KEY_ENTER)) {
+                    // attempt connection using clientIpBuffer
+                    exit(0);
+                }
+
+                if (IsKeyPressed(KEY_ESCAPE)) {
+                    exit(0);
+                }
                 if (IsKeyPressed(KEY_M)) {   //return to main menu
                     currentState = MENU_STATE;
                 }

@@ -56,7 +56,7 @@ void drawPieces(int offsetX, int offsetY, int cellSize, int selectedRow, int sel
 }
 
 void drawMenu(int selectedMenuOption) {
-    int screenWidth = GetScreenWidth(); // Replace with your actual screen width
+    int screenWidth = GetScreenWidth(); 
     int fontSizeTitle = 60;
     int fontSizeItem = 40;
 
@@ -64,6 +64,35 @@ void drawMenu(int selectedMenuOption) {
     const char *lanText = "VS LAN";
     const char *cpuText = "VS CPU";
     const char *instructions = "Use [UP↑] [DOWN↓] to select, ENTER to start";
+
+    // title
+    int titleWidth = MeasureText(title, fontSizeTitle);
+    DrawText(title, (screenWidth - titleWidth) / 2, 350, fontSizeTitle, WHITE);
+
+    // Menu options
+    Color lanColor = (selectedMenuOption == 0) ? RED : WHITE;
+    Color cpuColor = (selectedMenuOption == 1) ? RED : WHITE;
+
+    int lanWidth = MeasureText(lanText, fontSizeItem);
+    int cpuWidth = MeasureText(cpuText, fontSizeItem);
+
+    DrawText(lanText, (screenWidth - lanWidth) / 2, 450, fontSizeItem, lanColor);
+    DrawText(cpuText, (screenWidth - cpuWidth) / 2, 500, fontSizeItem, cpuColor);
+
+    // Instructions
+    int instrWidth = MeasureText(instructions, fontSizeItem);
+    DrawText(instructions, (screenWidth - instrWidth) / 2, 700, fontSizeItem, YELLOW);
+}
+
+void drawLanMenu(int selectedMenuOption) {
+    int screenWidth = GetScreenWidth(); 
+    int fontSizeTitle = 60;
+    int fontSizeItem = 40;
+
+    const char *title = "Would you like to:";
+    const char *lanText = "Host Game";
+    const char *cpuText = "Connect to Server";
+    const char *instructions = "Use ENTER to select, M for Menu ";
 
     // Centered title
     int titleWidth = MeasureText(title, fontSizeTitle);

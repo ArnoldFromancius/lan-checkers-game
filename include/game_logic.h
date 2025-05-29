@@ -11,7 +11,7 @@
 typedef enum {
     MENU_STATE,
     GAME_STATE,
-    // LAN_WAIT_STATE & GAME_OVER_STATE later
+    NETWORK_SETUP_STATE,
 } GameState;
 
 void initBoard(int [BOARD_SIZE][BOARD_SIZE]);

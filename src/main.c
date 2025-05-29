@@ -126,21 +126,27 @@ int main(){
                     boxClicked(row, col, &selectedPiece.flag, &selectedPiece.row, &selectedPiece.col, Board);
                     int winner = checkWinCondition(Board);
                     if (winner == 1 || winner == 2) {
-                        const char *message = (winner == 1) ? "PLAYER 1 WINS!" : "PLAYER 2 WINS!";
-                        log_info("%s", message);
-
+                        const char *message1 = (winner == 1) ? "PLAYER 1 WINS!" : "PLAYER 2 WINS!";
+                        const char *message2 =  "Press ENTER to restart, ESC to quit...";
+                        
+                        int message1FontSize = 50;
+                        int message2FontSize = 35;
+                        int message1Width = MeasureText(message1, message1FontSize);
+                        int message2Width = MeasureText(message2, message2FontSize);
+    
                         // Display win message and wait for ENTER
                         while (!WindowShouldClose()) {
                             BeginDrawing();
                             ClearBackground(RAYWHITE);
-
-                            DrawText(message, screenWidth / 2 - MeasureText(message, 40) / 2, screenHeight / 2 - 20, 40, GREEN);
-                            DrawText("Press ENTER to restart, ESC to quit...", screenWidth / 2 - MeasureText("Press ENTER to restart, ESC to quit...", 20) / 2, screenHeight / 2 + 40, 20, DARKGRAY);
+                            DrawTexture(background, 0, 0, WHITE);
+                            DrawText(message1, (screenWidth / 2) - (message1Width / 2), 400, message1FontSize, BLUE);
+                            DrawText(message2, screenWidth / 2 - (message2Width/2), 480, message2FontSize, WHITE);
 
                             EndDrawing();
 
                             if (IsKeyPressed(KEY_ENTER)) {
                                 resetGame(Board, &selectedPiece.flag, &selectedPiece.row, &selectedPiece.col);
+                                initBoard(Board);
                                 break;
                             }else if (IsKeyPressed(KEY_ESCAPE)) {
                                 CloseWindow();

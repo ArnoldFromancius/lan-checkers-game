@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <raylib.h>
 #include "../include/render.h"
+#include "../include/networking.h"
 #include "../include/game_logic.h"
 
 void drawBoard(int offsetX, int offsetY, int cellSize, int selectedRow, int selectedCol, int Board[BOARD_SIZE_T][BOARD_SIZE_T]){
@@ -107,6 +108,60 @@ void drawLanMenu(int selectedMenuOption) {
 
     DrawText(lanText, (screenWidth - lanWidth) / 2, 450, fontSizeItem, lanColor);
     DrawText(cpuText, (screenWidth - cpuWidth) / 2, 500, fontSizeItem, cpuColor);
+
+    // Instructions
+    int instrWidth = MeasureText(instructions, fontSizeItem);
+    DrawText(instructions, (screenWidth - instrWidth) / 2, 700, fontSizeItem, YELLOW);
+}
+
+void drawLanServerConnect() {
+    int screenWidth = GetScreenWidth(); 
+    int fontSizeTitle = 60;
+    int fontSizeItem = 40;
+
+    const char *title = "HOSTiNG GAME";
+    const char *lanText = "Waiting for a client to connect...";
+    const char *cpuText = "Your IP: ";
+    const char *instructions = "Use [ESC] to Quit, [M] for Menu ";
+
+    // Centered title
+    int titleWidth = MeasureText(title, fontSizeTitle);
+    DrawText(title, (screenWidth - titleWidth) / 2, 350, fontSizeTitle, WHITE);
+
+    // Menu options
+
+    int lanWidth = MeasureText(lanText, fontSizeItem);
+    int cpuWidth = MeasureText(cpuText, fontSizeItem);
+
+    DrawText(lanText, (screenWidth - lanWidth) / 2, 450, fontSizeItem, WHITE);
+    DrawText(cpuText, (screenWidth - cpuWidth) / 2, 530, fontSizeItem, WHITE);
+    DrawText(get_local_ip(), ((screenWidth - cpuWidth) / 2)-30, 580, fontSizeItem, PINK);
+    // Instructions
+    int instrWidth = MeasureText(instructions, fontSizeItem);
+    DrawText(instructions, (screenWidth - instrWidth) / 2, 700, fontSizeItem, YELLOW);
+}
+
+void drawLanClientConnect() {
+    int screenWidth = GetScreenWidth(); 
+    int fontSizeTitle = 60;
+    int fontSizeItem = 40;
+
+    const char *title = "HOSTiNG GAME";
+    const char *lanText = "Waiting for a client to connect...";
+    const char *cpuText = "Your IP: ";
+    const char *instructions = "Use [ESC] to Quit, [M] for Menu ";
+
+    // Centered title
+    int titleWidth = MeasureText(title, fontSizeTitle);
+    DrawText(title, (screenWidth - titleWidth) / 2, 350, fontSizeTitle, WHITE);
+
+    // Menu options
+
+    int lanWidth = MeasureText(lanText, fontSizeItem);
+    int cpuWidth = MeasureText(cpuText, fontSizeItem);
+
+    DrawText(lanText, (screenWidth - lanWidth) / 2, 450, fontSizeItem, WHITE);
+    DrawText(cpuText, (screenWidth - cpuWidth) / 2, 500, fontSizeItem, WHITE);
 
     // Instructions
     int instrWidth = MeasureText(instructions, fontSizeItem);

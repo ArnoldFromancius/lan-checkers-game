@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
 #include <raylib.h>
 #include "../include/game_logic.h"
 #include "../include/render.h"
@@ -12,6 +13,7 @@ GameState currentState = MENU_STATE;
 int gameMode = 0; // 1 = LAN, 2 = CPU
 int selectedMenuOption = 0; // 0 = LAN, 1 = CPU
 int selectedLanOption = 0; // 0 = server, 1 = client
+bool isServer = false;
 const int totalMenuOptions = 2;
 
 
@@ -163,6 +165,7 @@ int main(){
             DrawTexture(splashscreen, 0, 0, WHITE);
             drawLanMenu(selectedLanOption);
             EndDrawing();
+            
             if (IsKeyPressed(KEY_DOWN)) {
                 selectedLanOption = (selectedLanOption + 1) % totalMenuOptions;
                 PlayMenuSoundMove();
@@ -174,14 +177,35 @@ int main(){
 
             if (IsKeyPressed(KEY_ENTER)) {
                 gameMode = selectedLanOption + 1;
-                if(selectedLanOption == 1){ //client play
-                    exit(0);
-                }else{
-                    exit(0);
+                if(selectedLanOption == 1){ //client connect
+                    currentState = NETWORK_CONNECT_STATE;
+                }else{  //server host
+                    isServer=true;
+                    currentState = NETWORK_CONNECT_STATE;
                 }
                 PlayMenuSoundSelect();
             }else if (IsKeyPressed(KEY_M)) {   //return to main menu
                 currentState = MENU_STATE;
+            }
+        }else if(currentState==NETWORK_CONNECT_STATE){
+            if (isServer){  //server mode
+                BeginDrawing();
+                ClearBackground(RAYWHITE);
+                DrawTexture(splashscreen, 0, 0, WHITE);
+                drawLanServerConnect();
+                EndDrawing();
+                if (IsKeyPressed(KEY_M)) {   //return to main menu
+                    currentState = MENU_STATE;
+                }
+            }else{  //client mode
+                BeginDrawing();
+                ClearBackground(RAYWHITE);
+                DrawTexture(splashscreen, 0, 0, WHITE);
+                drawLanClientConnect();
+                EndDrawing();
+                if (IsKeyPressed(KEY_M)) {   //return to main menu
+                    currentState = MENU_STATE;
+                }
             }
         }
         //Toggle Debug mode

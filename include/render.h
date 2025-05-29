@@ -11,5 +11,7 @@ void drawBoard(int offsetX, int offsetY, int cellSize, int selectedRow, int sele
 void drawPieces(int offsetX, int offsetY, int cellSize, int selectedRow, int selectedCol, int Board[BOARD_SIZE_T][BOARD_SIZE_T]);
 void drawMenu(int selectedMenuOption);
 void drawLanMenu(int selectedMenuOption);
+void drawLanServerConnect(void);
+void drawLanClientConnect(void);
 
 #endif

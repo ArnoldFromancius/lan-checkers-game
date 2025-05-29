@@ -224,11 +224,11 @@ void tryPromoteToKing(int row, int col, int Board[BOARD_SIZE][BOARD_SIZE]) {
     if (piece == P1_PAWN && row == 7) {
         Board[row][col] = P1_KING;
         log_info("#KINGING: P1 pawn at (%d, %d) promoted to KING", row, col);
-        //PlayKingSound();
+        PlayKingSound();
     } else if (piece == P2_PAWN && row == 0) {
         Board[row][col] = P2_KING;
         log_info("#KINGING: P2 pawn at (%d, %d) promoted to KING", row, col);
-        //PlayKingSound();
+        PlayKingSound();
     }
 }
 

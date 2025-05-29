@@ -139,8 +139,8 @@ int main(){
                             BeginDrawing();
                             ClearBackground(RAYWHITE);
                             DrawTexture(background, 0, 0, WHITE);
-                            DrawText(message1, (screenWidth / 2) - (message1Width / 2), 400, message1FontSize, BLUE);
-                            DrawText(message2, screenWidth / 2 - (message2Width/2), 480, message2FontSize, WHITE);
+                            DrawText(message1, screenWidth/2 - message1Width/2, 400, message1FontSize, BLUE);
+                            DrawText(message2, screenWidth/2 - message2Width/2, 480, message2FontSize, WHITE);
 
                             EndDrawing();
 
@@ -252,7 +252,7 @@ int main(){
         }
     }
     UnloadMusicStream(bgm);
-    CloseAudioDevice();
+    CloseGameAudio();
     CloseWindow();
     return 0;
 }

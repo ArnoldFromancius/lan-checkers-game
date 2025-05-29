@@ -20,6 +20,7 @@ void CloseGameAudio(void) {
     UnloadSound(captureSound);
     UnloadSound(menuSound1);
     UnloadSound(menuSound2);
+    UnloadSound(kingSound);
     CloseAudioDevice();
 }
 

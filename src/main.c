@@ -5,8 +5,10 @@
 #include <ctype.h>
 #include <raylib.h>
 #include "../include/game_logic.h"
+#include "../include/networking.h"
 #include "../include/render.h"
 #include "../include/audio.h"
+#include "../include/cpu.h"
 #include "../include/log.h"
 
 int DEBUG_MODE = 0; // Set to 1 to enable debug logs
@@ -21,7 +23,7 @@ const int totalMenuOptions = 2;
 //setup ip address input
 char clientIpBuffer[MAX_IP_LEN] = "127.0.0.1";
 
-//solution to track position of a selected piece. Struct to soon be used
+//solution to track position of a selected piece. 
 typedef struct Selection{
 	int flag;   //tracks piece selection options: EMPTY_BOX,P1_PAWN, P2_PAWN,king pieces etc...
     int row;    //row of selected piece
@@ -63,11 +65,12 @@ int main(){
 
     //Main game loop
     int winner;
+    int PlayerTurn=2;
     int row=-1,col=-1;
     while (!WindowShouldClose())
     {
         //play and loop songif (IsKeyPressed(KEY_M))
-        if (IsKeyPressed(KEY_M)){
+        if (IsKeyPressed(KEY_SPACE)){
             if (musicPlaying)
             {
                 StopMusicStream(bgm);
@@ -123,7 +126,7 @@ int main(){
                     row = (mouse.y - offsetY) / cellSize;
                     log_info("\n#MAIN_FUNC selection made: X:%d Y:%d...",row,col);
                     //Logic for steps to take if a box is clicked
-                    boxClicked(row, col, &selectedPiece.flag, &selectedPiece.row, &selectedPiece.col, Board);
+                    boxClicked(row, col, &selectedPiece.flag, &selectedPiece.row, &selectedPiece.col, Board, &PlayerTurn);
                     int winner = checkWinCondition(Board);
                     if (winner == 1 || winner == 2) {
                         const char *message1 = (winner == 1) ? "PLAYER 1 WINS!" : "PLAYER 2 WINS!";
@@ -159,10 +162,58 @@ int main(){
                     log_board_state(Board);   
                 }
 
+                /*CPU moves
+                if(PlayerTurn == 1){
+                    Move cpuMove = getRandomCpuMove(Board, P2_PAWN);
+                    if (cpuMove.fromRow != -1) {
+                        log_info("cpu mov; fro r;%d c;%d to r;%d c;%d",cpuMove.fromRow,cpuMove.toCol,cpuMove.toRow,cpuMove.toCol);
+                        //boxClicked(cpuMove.fromRow,cpuMove.fromCol,&selectedPiece.flag,&selectedPiece.row,&selectedPiece.col,Board,&PlayerTurn);
+                        //selectedPiece.flag=P2_PAWN;
+                        //selectedPiece.row=cpuMove.fromRow;
+                        //selectedPiece.col=cpuMove.fromCol;
+                        //boxClicked(cpuMove.fromRow,cpuMove.fromCol,&selectedPiece.flag,&selectedPiece.row,&selectedPiece.col,Board,&PlayerTurn);
+                        //selectedPiece.flag=EMPTY_BOX;
+                    } else {
+                        // CPU has no moves — treat as loss
+                        int winner = checkWinCondition(Board);
+                        if (winner == 1 || winner == 2) {
+                            const char *message1 = (winner == 1) ? "PLAYER 1 WINS!" : "PLAYER 2 WINS!";
+                            const char *message2 =  "Press ENTER to restart, ESC to quit...";
+                            
+                            int message1FontSize = 50;
+                            int message2FontSize = 35;
+                            int message1Width = MeasureText(message1, message1FontSize);
+                            int message2Width = MeasureText(message2, message2FontSize);
+        
+                            // Display win message and wait for ENTER
+                            while (!WindowShouldClose()) {
+                                BeginDrawing();
+                                ClearBackground(RAYWHITE);
+                                DrawTexture(background, 0, 0, WHITE);
+                                DrawText(message1, screenWidth/2 - message1Width/2, 400, message1FontSize, BLUE);
+                                DrawText(message2, screenWidth/2 - message2Width/2, 480, message2FontSize, WHITE);
+
+                                EndDrawing();
+
+                                if (IsKeyPressed(KEY_ENTER)) {
+                                    resetGame(Board, &selectedPiece.flag, &selectedPiece.row, &selectedPiece.col);
+                                    initBoard(Board);
+                                    break;
+                                }else if (IsKeyPressed(KEY_ESCAPE)) {
+                                    CloseWindow();
+                                    exit(0);
+                                }
+
+                            }
+                        }
+                    }
+                    PlayerTurn = 2; //player 2' turn
+                    
+                }*/
+                
                 //Display changes 
                 ClearBackground(BACKGROUND_COLOR);
                 DrawTexture(background, 0, 0, WHITE);
-
                 drawBoard(offsetX, offsetY, cellSize, row, col, Board);
                 drawPieces(offsetX, offsetY, cellSize, selectedPiece.row, selectedPiece.col, Board);
                 EndDrawing();
@@ -204,6 +255,9 @@ int main(){
                 DrawTexture(splashscreen, 0, 0, WHITE);
                 drawLanServerConnect();
                 EndDrawing();
+                if(networkSetup(isServer, get_local_ip())){
+                    currentState = GAME_STATE;
+                }
                 if (IsKeyPressed(KEY_M)) {   //return to main menu
                     currentState = MENU_STATE;
                 }
@@ -233,7 +287,10 @@ int main(){
 
                 if (IsKeyPressed(KEY_ENTER)) {
                     // attempt connection using clientIpBuffer
-                    exit(0);
+                    if (networkSetup(isServer,clientIpBuffer)){
+                        //if client connected successfully
+                        currentState = GAME_STATE;
+                    }
                 }
 
                 if (IsKeyPressed(KEY_ESCAPE)) {
@@ -242,6 +299,7 @@ int main(){
                 if (IsKeyPressed(KEY_M)) {   //return to main menu
                     currentState = MENU_STATE;
                 }
+                
             }
         }
         //Toggle Debug mode

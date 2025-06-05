@@ -32,7 +32,7 @@ void initBoard(int Board[BOARD_SIZE][BOARD_SIZE]){
     }
 }
 
-void boxClicked(int row, int col, int *sPFlag, int *sPRow, int *sPCol, int Board[BOARD_SIZE][BOARD_SIZE]) {
+void boxClicked(int row, int col, int *sPFlag, int *sPRow, int *sPCol, int Board[BOARD_SIZE][BOARD_SIZE], int *playerTurn) {
     //for debugging purposed
     log_info("\n#BOX_CLICKED -");
     log_info("$highlighted_Piece: flag: %d row: %d col: %d",*sPFlag,*sPRow,*sPCol);
@@ -42,15 +42,39 @@ void boxClicked(int row, int col, int *sPFlag, int *sPRow, int *sPCol, int Board
         return;
 
     int clickedPiece = Board[row][col];
+    /*check if appropriate player's turn playing
+    if (*playerTurn == 1) {
+        if (clickedPiece != P1_PAWN && clickedPiece != P1_KING)
+            return;
+    } else if (*playerTurn == 2) {
+        if (clickedPiece != P2_PAWN && clickedPiece != P2_KING)
+            return;
+    }*/ 
+   
+    /* Allow reselecting only if clicked piece belongs to current player
+    if ((clickedPiece == P1_PAWN || clickedPiece == P2_PAWN || 
+        clickedPiece == P1_KING || clickedPiece == P2_KING) &&
+        ((clickedPiece == P1_PAWN || clickedPiece == P1_KING) && *playerTurn == 1) ||
+        ((clickedPiece == P2_PAWN || clickedPiece == P2_KING) && *playerTurn == 2)) {
 
-    // Select a piece
-    if (clickedPiece == P1_PAWN || clickedPiece == P2_PAWN || 
-        clickedPiece == P1_KING || clickedPiece == P2_KING) {
+        *sPFlag = clickedPiece;
+        *sPRow = row;
+        *sPCol = col;
+        return;
+    }*/
+
+
+    //Select a piece
+    if ((clickedPiece == P1_PAWN || clickedPiece == P2_PAWN || 
+        clickedPiece == P1_KING || clickedPiece == P2_KING)) {
+
         *sPFlag = clickedPiece;
         *sPRow = row;
         *sPCol = col;
         return;
     }
+
+   
 
     // Attempt move
     if (*sPFlag != EMPTY_BOX) {
@@ -60,21 +84,23 @@ void boxClicked(int row, int col, int *sPFlag, int *sPRow, int *sPCol, int Board
         int toCol = col;
         int piece = *sPFlag;
         int tmp;
-        if (isValidMove(fromRow, fromCol, toRow, toCol, piece)) {
+        if (isValidMove(fromRow, fromCol, toRow, toCol, piece, Board)) {
             log_info("#ValidMove");
             Board[fromRow][fromCol] = EMPTY_BOX;
             Board[toRow][toCol] = piece;
             PlayMoveSound();
-            tryPromoteToKing(toRow, toCol, Board); 
+            tryPromoteToKing(toRow, toCol, Board);
+            switchPlayer(playerTurn); 
         }
         else if (isValidJump(fromRow, fromCol, toRow, toCol, piece, Board)) {
             int midRow = (fromRow + toRow) / 2;
             int midCol = (fromCol + toCol) / 2;
             Board[fromRow][fromCol] = EMPTY_BOX;
             Board[midRow][midCol] = EMPTY_BOX;
-            Board[toRow][toCol] = piece;  
+            Board[toRow][toCol] = piece; 
             PlayCaptureSound();
-            tryPromoteToKing(toRow, toCol, Board); 
+            tryPromoteToKing(toRow, toCol, Board);
+            switchPlayer(playerTurn); 
         }
           
         // Check for more jumps
@@ -86,6 +112,7 @@ void boxClicked(int row, int col, int *sPFlag, int *sPRow, int *sPCol, int Board
             *sPRow = -1;
             *sPCol = -1;
             *sPFlag = EMPTY_BOX;
+            switchPlayer(playerTurn);
         }
     }
 }
@@ -111,23 +138,30 @@ int getPieceDirection(int piece) {
     return 0; // kings handled separately
 }
 
-int isValidMove(int fromRow, int fromCol, int toRow, int toCol, int piece) {
+int isValidMove(int fromRow, int fromCol, int toRow, int toCol, int piece, int board[BOARD_SIZE][BOARD_SIZE]) {
+    if (toRow < 0 || toRow >= BOARD_SIZE || toCol < 0 || toCol >= BOARD_SIZE)
+        return 0; // off board
+
+    if (board[toRow][toCol] != 0)
+        return 0; // destination not empty
+
     int dRow = toRow - fromRow;
     int dCol = toCol - fromCol;
 
-    // Regular movement
-    if (abs(dRow) == 1 && abs(dCol) == 1) {
-        if (piece == P1_KING || piece == P2_KING)
-            return 1; // kings can move in both directions
-        else
-            return dRow == getPieceDirection(piece);
-    }
+    if (abs(dRow) != 1 || abs(dCol) != 1)
+        return 0; // must move one step diagonally
 
-    return 0;
+    int direction = getPieceDirection(piece);
+
+    // If it's a man (not king), it can only move forward
+    if (board[fromRow][fromCol] == piece && dRow != direction)
+        return 0;
+
+    return 1; // legal move
 }
 
+
 int isValidJump(int fromRow, int fromCol, int toRow, int toCol, int piece, int Board[BOARD_SIZE][BOARD_SIZE]) {
-    log_info("#INSIDE_ValidJump");
     int dRow = toRow - fromRow;
     int dCol = toCol - fromCol;
 
@@ -191,7 +225,7 @@ int hasValidMoves(int player, int Board[BOARD_SIZE][BOARD_SIZE]) {
                             continue;
 
                         if (abs(dr) == 1) {
-                            if (isValidMove(row, col, newRow, newCol, piece))
+                            if (isValidMove(row, col, newRow, newCol, piece, Board))
                                 return 1;
                         } else if (abs(dr) == 2) {
                             if (isValidJump(row, col, newRow, newCol, piece, Board))
@@ -240,3 +274,8 @@ void resetGame(int Board[BOARD_SIZE][BOARD_SIZE], int *sPFlag, int *sPRow, int *
     // Reset more state here if needed
 }
 
+void switchPlayer(int *PlayerTurn){
+    if(*PlayerTurn == 1) *PlayerTurn=2;
+    else if(*PlayerTurn == 2) *PlayerTurn=1;
+    log_info("current Player: %d", *PlayerTurn);
+}

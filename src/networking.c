@@ -6,9 +6,25 @@
 #include <stdbool.h>
 #include <sys/socket.h>
 #include <arpa/inet.h>
-
+#include <pthread.h>  // 🧵 added for threading
 
 static int sockfd = -1;
+static int serverSocket = -1;
+static pthread_t accept_thread;
+static bool clientConnected = false;
+
+// 🧵 Thread function to handle accept() without freezing UI
+void *acceptClientThread(void *arg) {
+    int client = accept(serverSocket, NULL, NULL);
+    if (client >= 0) {
+        close(serverSocket);
+        serverSocket = -1;
+        sockfd = client;
+        clientConnected = true;
+    }
+    return NULL;
+}
+
 const char *get_local_ip() {
     static char ip[INET_ADDRSTRLEN] = "Unknown";
 
@@ -18,8 +34,8 @@ const char *get_local_ip() {
     struct sockaddr_in fake_addr;
     memset(&fake_addr, 0, sizeof(fake_addr));
     fake_addr.sin_family = AF_INET;
-    fake_addr.sin_port = htons(80);  // arbitrary
-    inet_pton(AF_INET, "8.8.8.8", &fake_addr.sin_addr);  // Google's DNS
+    fake_addr.sin_port = htons(80);
+    inet_pton(AF_INET, "8.8.8.8", &fake_addr.sin_addr);
 
     connect(temp_sock, (struct sockaddr*)&fake_addr, sizeof(fake_addr));
 
@@ -35,22 +51,29 @@ const char *get_local_ip() {
 
 bool networkSetup(bool isHost, const char *ip) {
     struct sockaddr_in addr;
-    sockfd = socket(AF_INET, SOCK_STREAM, 0);
-    if (sockfd < 0) return false;
-
-    addr.sin_family = AF_INET;
-    addr.sin_port = htons(PORT);
-    addr.sin_addr.s_addr = isHost ? INADDR_ANY : inet_addr(ip);
-
     if (isHost) {
-        if (bind(sockfd, (struct sockaddr *)&addr, sizeof(addr)) < 0) return false;
-        listen(sockfd, 1);
-        int client = accept(sockfd, NULL, NULL);
-        if (client < 0) return false;
-        close(sockfd);
-        sockfd = client;
+        serverSocket = socket(AF_INET, SOCK_STREAM, 0);
+        if (serverSocket < 0) return false;
+
+        addr.sin_family = AF_INET;
+        addr.sin_port = htons(PORT);
+        addr.sin_addr.s_addr = INADDR_ANY;
+
+        if (bind(serverSocket, (struct sockaddr *)&addr, sizeof(addr)) < 0) return false;
+        if (listen(serverSocket, 1) < 0) return false;
+
+        // 🧵 Start thread to accept client in background
+        pthread_create(&accept_thread, NULL, acceptClientThread, NULL);
     } else {
+        sockfd = socket(AF_INET, SOCK_STREAM, 0);
+        if (sockfd < 0) return false;
+
+        addr.sin_family = AF_INET;
+        addr.sin_port = htons(PORT);
+        addr.sin_addr.s_addr = inet_addr(ip);
+
         if (connect(sockfd, (struct sockaddr *)&addr, sizeof(addr)) < 0) return false;
+        clientConnected = true;
     }
 
     return true;
@@ -69,4 +92,13 @@ void closeNetwork() {
         close(sockfd);
         sockfd = -1;
     }
+    if (serverSocket != -1) {
+        close(serverSocket);
+        serverSocket = -1;
+    }
+}
+
+// 🧩 This function lets your game check if the client has connected
+bool isClientConnected() {
+    return clientConnected;
 }

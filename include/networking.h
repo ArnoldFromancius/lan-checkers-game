@@ -15,6 +15,7 @@ typedef struct {
 
 const char *get_local_ip();  // returns pointer to static string
 bool networkSetup(bool isHost, const char *ip);
+bool isClientConnected();
 bool sendMove(MovePacket move);
 bool receiveMove(MovePacket *move);
 void closeNetwork();

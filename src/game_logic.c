@@ -42,14 +42,16 @@ void boxClicked(int row, int col, int *sPFlag, int *sPRow, int *sPCol, int Board
         return;
 
     int clickedPiece = Board[row][col];
-    /*check if appropriate player's turn playing
+    //check if appropriate player's turn playing
     if (*playerTurn == 1) {
-        if (clickedPiece != P1_PAWN && clickedPiece != P1_KING)
+        if ((clickedPiece != P1_PAWN && clickedPiece != P1_KING) && (*sPFlag != P1_PAWN && *sPFlag != P1_KING)){
             return;
+        }   
     } else if (*playerTurn == 2) {
-        if (clickedPiece != P2_PAWN && clickedPiece != P2_KING)
+        if ((clickedPiece != P2_PAWN && clickedPiece != P2_KING) && (*sPFlag != P2_PAWN && *sPFlag != P2_KING)){
             return;
-    }*/ 
+        }
+    }
    
     /* Allow reselecting only if clicked piece belongs to current player
     if ((clickedPiece == P1_PAWN || clickedPiece == P2_PAWN || 

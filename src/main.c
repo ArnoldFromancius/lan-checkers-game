@@ -65,7 +65,7 @@ int main(){
 
     //Main game loop
     int winner;
-    int PlayerTurn=2;
+    int PlayerTurn=1;
     int row=-1,col=-1;
     while (!WindowShouldClose())
     {
@@ -218,7 +218,21 @@ int main(){
                 drawPieces(offsetX, offsetY, cellSize, selectedPiece.row, selectedPiece.col, Board);
                 EndDrawing();
             }else if(gameMode == 1){ //lan mode
-                exit(0);
+                
+                //if we are server
+                if(isServer){
+                    if(PlayerTurn == 1){//Our turn
+                        log_info("ServerMode: connected to client...");
+                        exit(0);
+                    }else if(PlayerTurn == 2){//Clients turn
+                        
+                        exit(0);
+                    }
+                }else{  //if we are client
+                    log_info("ClientMode: connected to server...");
+                    exit(0);
+                }
+                
             }
         }else if(currentState == NETWORK_SETUP_STATE){
             BeginDrawing();
@@ -239,6 +253,7 @@ int main(){
             if (IsKeyPressed(KEY_ENTER)) {
                 gameMode = selectedLanOption + 1;
                 if(selectedLanOption == 1){ //client connect
+                    isServer=false;                    
                     currentState = NETWORK_CONNECT_STATE;
                 }else{  //server host
                     isServer=true;
@@ -246,6 +261,7 @@ int main(){
                 }
                 PlayMenuSoundSelect();
             }else if (IsKeyPressed(KEY_M)) {   //return to main menu
+                isServer=false;
                 currentState = MENU_STATE;
             }
         }else if(currentState==NETWORK_CONNECT_STATE){
@@ -255,9 +271,13 @@ int main(){
                 DrawTexture(splashscreen, 0, 0, WHITE);
                 drawLanServerConnect();
                 EndDrawing();
-                if(networkSetup(isServer, get_local_ip())){
+                networkSetup(isServer, get_local_ip());
+                if (isClientConnected()) {
+                    // Proceed to game
                     currentState = GAME_STATE;
+                    gameMode=1;
                 }
+
                 if (IsKeyPressed(KEY_M)) {   //return to main menu
                     currentState = MENU_STATE;
                 }
@@ -290,6 +310,7 @@ int main(){
                     if (networkSetup(isServer,clientIpBuffer)){
                         //if client connected successfully
                         currentState = GAME_STATE;
+                        gameMode=1;
                     }
                 }
 

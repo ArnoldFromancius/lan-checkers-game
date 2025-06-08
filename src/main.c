@@ -221,8 +221,9 @@ int main(){
                 
                 //if we are server
                 if(isServer){
+                    log_info("ServerMode: connected to client...");
                     if(PlayerTurn == 1){//Our turn
-                        log_info("ServerMode: connected to client...");
+                        
                         exit(0);
                     }else if(PlayerTurn == 2){//Clients turn
                         

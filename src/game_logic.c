@@ -102,20 +102,18 @@ void boxClicked(int row, int col, int *sPFlag, int *sPRow, int *sPCol, int Board
             Board[toRow][toCol] = piece; 
             PlayCaptureSound();
             tryPromoteToKing(toRow, toCol, Board);
-            switchPlayer(playerTurn); 
-        }
-          
-        // Check for more jumps
-        if (hasMoreJumps(toRow, toCol, piece, Board)) {
-            *sPRow = toRow;
-            *sPCol = toCol;
-            *sPFlag = piece;
-        } else {
-            *sPRow = -1;
-            *sPCol = -1;
-            *sPFlag = EMPTY_BOX;
-            switchPlayer(playerTurn);
-        }
+            // Check for more jumps
+            if (hasMoreJumps(toRow, toCol, piece, Board)) {
+                *sPRow = toRow;
+                *sPCol = toCol;
+                *sPFlag = piece;
+            } else {
+                *sPRow = -1;
+                *sPCol = -1;
+                *sPFlag = EMPTY_BOX;
+                switchPlayer(playerTurn);
+            }
+        }   
     }
 }
 
@@ -162,26 +160,30 @@ int isValidMove(int fromRow, int fromCol, int toRow, int toCol, int piece, int b
     return 1; // legal move
 }
 
-
 int isValidJump(int fromRow, int fromCol, int toRow, int toCol, int piece, int Board[BOARD_SIZE][BOARD_SIZE]) {
     int dRow = toRow - fromRow;
     int dCol = toCol - fromCol;
 
+    // Check jump distance
     if (abs(dRow) == 2 && abs(dCol) == 2) {
         int midRow = (fromRow + toRow) / 2;
         int midCol = (fromCol + toCol) / 2;
         int middlePiece = Board[midRow][midCol];
 
+        // 🧠 NEW: Must land on empty square
+        if (Board[toRow][toCol] != EMPTY_BOX)
+            return 0;
+
         // P1 captures P2
         if ((piece == P1_PAWN || piece == P1_KING) &&
             (middlePiece == P2_PAWN || middlePiece == P2_KING)) {
-            return 1;  // allow any jump direction
+            return 1;
         }
 
         // P2 captures P1
         if ((piece == P2_PAWN || piece == P2_KING) &&
             (middlePiece == P1_PAWN || middlePiece == P1_KING)) {
-            return 1;  // allow any jump direction
+            return 1;
         }
     }
 
@@ -205,6 +207,7 @@ int hasMoreJumps(int row, int col, int piece, int Board[BOARD_SIZE][BOARD_SIZE])
     }
     return 0;
 }
+
 
 int hasValidMoves(int player, int Board[BOARD_SIZE][BOARD_SIZE]) {
     for (int row = 0; row < BOARD_SIZE; row++) {

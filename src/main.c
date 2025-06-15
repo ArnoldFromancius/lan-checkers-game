@@ -3,6 +3,7 @@
 #include <stdbool.h>
 #include <string.h>
 #include <ctype.h>
+#include <time.h>
 #include <raylib.h>
 #include "../include/game_logic.h"
 #include "../include/networking.h"
@@ -18,6 +19,7 @@ int gameMode = 0; // 1 = LAN, 2 = CPU
 int selectedMenuOption = 0; // 0 = LAN, 1 = CPU
 int selectedLanOption = 0; // 0 = server, 1 = client
 bool isServer = false;
+bool serverTurn = true;
 const int totalMenuOptions = 2;
 
 //setup ip address input
@@ -40,7 +42,6 @@ int main(){
     Music bgm = LoadMusicStream("assets/sounds/bg.mp3");
     PlayMusicStream(bgm);
     bool musicPlaying = true;
-    PlayMusicStream(bgm);
 
     Texture2D background = LoadTexture("./assets/imgs/bg1.png");
     Texture2D splashscreen = LoadTexture("./assets/imgs/splash.png");
@@ -55,6 +56,7 @@ int main(){
     int offsetY = (screenHeight - (cellSize * BOARD_SIZE)) / 2;
     SetTargetFPS(60);
     initBoard(Board);
+    initCpu();
     log_info("#MAIN_FUNC board initilized...");
 
     //initialize selection
@@ -65,8 +67,9 @@ int main(){
 
     //Main game loop
     int winner;
-    int PlayerTurn=1;
+    int PlayerTurn=2;
     int row=-1,col=-1;
+    bool serverInitPlay=true; //need for the first ever move by server to keep screen updated
     while (!WindowShouldClose())
     {
         //play and loop songif (IsKeyPressed(KEY_M))
@@ -118,122 +121,193 @@ int main(){
                 
             if (gameMode == 2) { //cpu mode
                 BeginDrawing();
-                //When a box is clicked
-                if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
-                {
-                    Vector2 mouse = GetMousePosition();
-                    col = (mouse.x - offsetX) / cellSize;
-                    row = (mouse.y - offsetY) / cellSize;
-                    log_info("\n#MAIN_FUNC selection made: X:%d Y:%d...",row,col);
-                    //Logic for steps to take if a box is clicked
-                    boxClicked(row, col, &selectedPiece.flag, &selectedPiece.row, &selectedPiece.col, Board, &PlayerTurn);
-                    int winner = checkWinCondition(Board);
-                    if (winner == 1 || winner == 2) {
-                        const char *message1 = (winner == 1) ? "PLAYER 1 WINS!" : "PLAYER 2 WINS!";
-                        const char *message2 =  "Press ENTER to restart, ESC to quit...";
-                        
-                        int message1FontSize = 50;
-                        int message2FontSize = 35;
-                        int message1Width = MeasureText(message1, message1FontSize);
-                        int message2Width = MeasureText(message2, message2FontSize);
-    
-                        // Display win message and wait for ENTER
-                        while (!WindowShouldClose()) {
-                            BeginDrawing();
-                            ClearBackground(RAYWHITE);
-                            DrawTexture(background, 0, 0, WHITE);
-                            DrawText(message1, screenWidth/2 - message1Width/2, 400, message1FontSize, BLUE);
-                            DrawText(message2, screenWidth/2 - message2Width/2, 480, message2FontSize, WHITE);
-
-                            EndDrawing();
-
-                            if (IsKeyPressed(KEY_ENTER)) {
-                                resetGame(Board, &selectedPiece.flag, &selectedPiece.row, &selectedPiece.col);
-                                initBoard(Board);
-                                break;
-                            }else if (IsKeyPressed(KEY_ESCAPE)) {
-                                CloseWindow();
-                                exit(0);
-                            }
-
-                        }
-                    }
-
-                    log_board_state(Board);   
-                }
-
-                /*CPU moves
-                if(PlayerTurn == 1){
-                    Move cpuMove = getRandomCpuMove(Board, P2_PAWN);
-                    if (cpuMove.fromRow != -1) {
-                        log_info("cpu mov; fro r;%d c;%d to r;%d c;%d",cpuMove.fromRow,cpuMove.toCol,cpuMove.toRow,cpuMove.toCol);
-                        //boxClicked(cpuMove.fromRow,cpuMove.fromCol,&selectedPiece.flag,&selectedPiece.row,&selectedPiece.col,Board,&PlayerTurn);
-                        //selectedPiece.flag=P2_PAWN;
-                        //selectedPiece.row=cpuMove.fromRow;
-                        //selectedPiece.col=cpuMove.fromCol;
-                        //boxClicked(cpuMove.fromRow,cpuMove.fromCol,&selectedPiece.flag,&selectedPiece.row,&selectedPiece.col,Board,&PlayerTurn);
-                        //selectedPiece.flag=EMPTY_BOX;
-                    } else {
-                        // CPU has no moves — treat as loss
-                        int winner = checkWinCondition(Board);
-                        if (winner == 1 || winner == 2) {
-                            const char *message1 = (winner == 1) ? "PLAYER 1 WINS!" : "PLAYER 2 WINS!";
-                            const char *message2 =  "Press ENTER to restart, ESC to quit...";
-                            
-                            int message1FontSize = 50;
-                            int message2FontSize = 35;
-                            int message1Width = MeasureText(message1, message1FontSize);
-                            int message2Width = MeasureText(message2, message2FontSize);
-        
-                            // Display win message and wait for ENTER
-                            while (!WindowShouldClose()) {
-                                BeginDrawing();
-                                ClearBackground(RAYWHITE);
-                                DrawTexture(background, 0, 0, WHITE);
-                                DrawText(message1, screenWidth/2 - message1Width/2, 400, message1FontSize, BLUE);
-                                DrawText(message2, screenWidth/2 - message2Width/2, 480, message2FontSize, WHITE);
-
-                                EndDrawing();
-
-                                if (IsKeyPressed(KEY_ENTER)) {
-                                    resetGame(Board, &selectedPiece.flag, &selectedPiece.row, &selectedPiece.col);
-                                    initBoard(Board);
-                                    break;
-                                }else if (IsKeyPressed(KEY_ESCAPE)) {
-                                    CloseWindow();
-                                    exit(0);
-                                }
-
-                            }
-                        }
-                    }
-                    PlayerTurn = 2; //player 2' turn
+                if(PlayerTurn == 2){    //user turn
                     
-                }*/
+                    //When a box is clicked
+                    if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
+                    {
+                        Vector2 mouse = GetMousePosition();
+                        col = (mouse.x - offsetX) / cellSize;
+                        row = (mouse.y - offsetY) / cellSize;
+                        log_info("\n#MAIN_FUNC selection made: X:%d Y:%d...",row,col);
+                        //Logic for steps to take if a box is clicked
+                        boxClicked(row, col, &selectedPiece.flag, &selectedPiece.row, &selectedPiece.col, Board, &PlayerTurn);    
+                    }
+                }else if(PlayerTurn == 1){  //cpu turn
+                    cpuMakeMove(Board,&PlayerTurn);
+                }
                 
+                int winner = checkWinCondition(Board);
+                if (winner == 1 || winner == 2) {
+                    const char *message1 = (winner == 1) ? "PLAYER 1 WINS!" : "PLAYER 2 WINS!";
+                    const char *message2 =  "Press ENTER to restart, ESC to quit...";
+                            
+                    int message1FontSize = 50;         
+                    int message2FontSize = 35;       
+                    int message1Width = MeasureText(message1, message1FontSize);
+                    int message2Width = MeasureText(message2, message2FontSize);
+        
+                    // Display win message and wait for ENTER        
+                    while (!WindowShouldClose()) {
+                        BeginDrawing();
+                        ClearBackground(RAYWHITE);
+                        DrawTexture(background, 0, 0, WHITE);
+                        DrawText(message1, screenWidth/2 - message1Width/2, 400, message1FontSize, BLUE);
+                        DrawText(message2, screenWidth/2 - message2Width/2, 480, message2FontSize, WHITE);
+                        EndDrawing();
+
+                        if (IsKeyPressed(KEY_ENTER)) {
+                            resetGame(Board, &selectedPiece.flag, &selectedPiece.row, &selectedPiece.col);
+                            initBoard(Board);
+                            break;
+                        }else if (IsKeyPressed(KEY_ESCAPE)) {
+                            CloseWindow();
+                            exit(0);
+                        }
+                    }
+                }  
+
+                //log_board_state(Board);  
                 //Display changes 
                 ClearBackground(BACKGROUND_COLOR);
                 DrawTexture(background, 0, 0, WHITE);
                 drawBoard(offsetX, offsetY, cellSize, row, col, Board);
                 drawPieces(offsetX, offsetY, cellSize, selectedPiece.row, selectedPiece.col, Board);
+                const char* turnMsg = (PlayerTurn == 1) ? "PLAYER 1 TURN" : "PLAYER 2 TURN";
+                DrawText(turnMsg, 20, 20, 30, (PlayerTurn == 1) ? BLUE : RED);
                 EndDrawing();
             }else if(gameMode == 1){ //lan mode
                 
                 //if we are server
                 if(isServer){
                     log_info("ServerMode: connected to client...");
-                    if(PlayerTurn == 1){//Our turn
-                        
-                        exit(0);
-                    }else if(PlayerTurn == 2){//Clients turn
-                        
-                        exit(0);
+                    if(serverTurn){//Our turn
+                        //waiting for mouse click
+                        if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)){
+                            Vector2 mouse = GetMousePosition();
+                            col = (mouse.x - offsetX) / cellSize;
+                            row = (mouse.y - offsetY) / cellSize;
+                            log_info("\n#MAIN_FUNC selection made: X:%d Y:%d...",row,col);
+                            //Logic for steps to take if a box is clicked
+                            boxClicked(row, col, &selectedPiece.flag, &selectedPiece.row, &selectedPiece.col, Board, &PlayerTurn);
+                            
+                            //send updated board to client
+                            int sock = getSocketFD();
+                            sendBoard(sock, Board);
+
+                            //check for game over
+                            int winner = checkWinCondition(Board);
+                            if (winner == 1 || winner == 2) {
+                                const char *message1 = (winner == 1) ? "PLAYER 1 WINS!" : "PLAYER 2 WINS!";
+                                const char *message2 =  "Press ENTER to restart, ESC to quit...";
+                                
+                                int message1FontSize = 50;
+                                int message2FontSize = 35;
+                                int message1Width = MeasureText(message1, message1FontSize);
+                                int message2Width = MeasureText(message2, message2FontSize);
+
+                                // Display win message and wait for ENTER
+                                while (!WindowShouldClose()) {
+                                    BeginDrawing();
+                                    ClearBackground(RAYWHITE);
+                                    DrawTexture(background, 0, 0, WHITE);
+                                    DrawText(message1, screenWidth/2 - message1Width/2, 400, message1FontSize, BLUE);
+                                    DrawText(message2, screenWidth/2 - message2Width/2, 480, message2FontSize, WHITE);
+
+                                    EndDrawing();
+
+                                    if (IsKeyPressed(KEY_ENTER)) {
+                                        resetGame(Board, &selectedPiece.flag, &selectedPiece.row, &selectedPiece.col);
+                                        initBoard(Board);
+                                        break;
+                                    }else if (IsKeyPressed(KEY_ESCAPE)) {
+                                        CloseWindow();
+                                        exit(0);
+                                    }
+
+                                }
+                            }
+                            log_board_state(Board);   
+                        }
+                        serverTurn = false;
+
+                    }else if(!serverTurn){//Clients turn
+                        //Receive updated board from client
+                        int sock = getSocketFD();
+                        recvBoard(sock, Board);
+                        serverTurn = true;
                     }
                 }else{  //if we are client
                     log_info("ClientMode: connected to server...");
-                    exit(0);
+                    if(serverTurn && serverInitPlay){//Servers turn- first ever move
+                        serverInitPlay = false;
+                        //this part just makes sure that the board is atleast drawn once before waiting for a move from server
+                    }
+                    else if(serverTurn && !serverInitPlay){//Servers turn- every followup move
+                        //Receive updated board from server
+                        int sock = getSocketFD();
+                        recvBoard(sock, Board);
+                        serverTurn = false;
+                    }
+                    else if(!serverTurn){//Our turn
+                        //waiting for mouse click
+                        if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)){
+                            Vector2 mouse = GetMousePosition();
+                            col = (mouse.x - offsetX) / cellSize;
+                            row = (mouse.y - offsetY) / cellSize;
+                            log_info("\n#MAIN_FUNC selection made: X:%d Y:%d...",row,col);
+                            //Logic for steps to take if a box is clicked
+                            boxClicked(row, col, &selectedPiece.flag, &selectedPiece.row, &selectedPiece.col, Board, &PlayerTurn);
+                            //send updated board to server
+                            int sock = getSocketFD();
+                            sendBoard(sock, Board);
+                            //PlayerTurn = 1;
+
+                            //check for game over
+                            int winner = checkWinCondition(Board);
+                            if (winner == 1 || winner == 2) {
+                                const char *message1 = (winner == 1) ? "PLAYER 1 WINS!" : "PLAYER 2 WINS!";
+                                const char *message2 =  "Press ENTER to restart, ESC to quit...";
+                                
+                                int message1FontSize = 50;
+                                int message2FontSize = 35;
+                                int message1Width = MeasureText(message1, message1FontSize);
+                                int message2Width = MeasureText(message2, message2FontSize);
+
+                                // Display win message and wait for ENTER
+                                while (!WindowShouldClose()) {
+                                    BeginDrawing();
+                                    ClearBackground(RAYWHITE);
+                                    DrawTexture(background, 0, 0, WHITE);
+                                    DrawText(message1, screenWidth/2 - message1Width/2, 400, message1FontSize, BLUE);
+                                    DrawText(message2, screenWidth/2 - message2Width/2, 480, message2FontSize, WHITE);
+
+                                    EndDrawing();
+
+                                    if (IsKeyPressed(KEY_ENTER)) {
+                                        resetGame(Board, &selectedPiece.flag, &selectedPiece.row, &selectedPiece.col);
+                                        initBoard(Board);
+                                        break;
+                                    }else if (IsKeyPressed(KEY_ESCAPE)) {
+                                        CloseWindow();
+                                        exit(0);
+                                    }
+
+                                }
+                            }
+                            log_board_state(Board);   
+                        }
+                        serverTurn = true;
+                    }
                 }
-                
+                //Display changes 
+                ClearBackground(BACKGROUND_COLOR);
+                DrawTexture(background, 0, 0, WHITE);
+                drawBoard(offsetX, offsetY, cellSize, row, col, Board);
+                drawPieces(offsetX, offsetY, cellSize, selectedPiece.row, selectedPiece.col, Board);
+                const char* turnMsg = (PlayerTurn == 1) ? "PLAYER 1 TURN" : "PLAYER 2 TURN";
+                DrawText(turnMsg, 20, 20, 30, (PlayerTurn == 1) ? BLUE : RED);
+                EndDrawing();   
             }
         }else if(currentState == NETWORK_SETUP_STATE){
             BeginDrawing();

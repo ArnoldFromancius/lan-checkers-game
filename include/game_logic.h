@@ -6,6 +6,7 @@
 #define P1_KING 3
 #define P2_KING 4
 #define EMPTY_BOX 0
+#define ILLEGAL_SQUARE -9
 #define BOARD_SIZE 8
 #define MAX_IP_LEN 32 //ip address
 
@@ -18,6 +19,10 @@ typedef enum {
 
 
 void initBoard(int [BOARD_SIZE][BOARD_SIZE]);
+
+void initCpu();
+
+void cpuMakeMove();
 
 void boxClicked(int row, int col, int *sPFlag, int *sPRow, int *sPCol, int Board[BOARD_SIZE][BOARD_SIZE], int *playerTurn);
 
@@ -33,6 +38,8 @@ int hasMoreJumps(int row, int col, int piece, int Board[BOARD_SIZE][BOARD_SIZE])
 
 int hasValidMoves(int player, int Board[BOARD_SIZE][BOARD_SIZE]);
 
+int canCapture(int x, int y, int piece, int Board[BOARD_SIZE][BOARD_SIZE]);
+
 int countPieces(int player, int Board[BOARD_SIZE][BOARD_SIZE]);
 
 void tryPromoteToKing(int row, int col, int Board[BOARD_SIZE][BOARD_SIZE]);
@@ -40,5 +47,6 @@ void tryPromoteToKing(int row, int col, int Board[BOARD_SIZE][BOARD_SIZE]);
 void resetGame(int Board[BOARD_SIZE][BOARD_SIZE], int *sPFlag, int *sPRow, int *sPCol);
 
 void switchPlayer(int *PlayerTurn);
+
 
 #endif

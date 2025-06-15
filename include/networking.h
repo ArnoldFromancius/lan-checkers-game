@@ -7,17 +7,13 @@
 #define PORT 12345
 #define MOVE_MSG 1
 #define QUIT_MSG 2
-typedef struct {
-    int type;      // MOVE_MSG or QUIT_MSG
-    int fromX, fromY;
-    int toX, toY;
-} MovePacket;
 
 const char *get_local_ip();  // returns pointer to static string
 bool networkSetup(bool isHost, const char *ip);
 bool isClientConnected();
-bool sendMove(MovePacket move);
-bool receiveMove(MovePacket *move);
+int recvBoard(int sock, int Board[8][8]);
+int sendBoard(int sock, int Board[8][8]);
+int getSocketFD();
 void closeNetwork();
 
 #endif

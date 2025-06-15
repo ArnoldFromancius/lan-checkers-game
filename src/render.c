@@ -56,6 +56,7 @@ void drawPieces(int offsetX, int offsetY, int cellSize, int selectedRow, int sel
     }
 }
 
+
 void drawMenu(int selectedMenuOption) {
     int screenWidth = GetScreenWidth(); 
     int fontSizeTitle = 60;

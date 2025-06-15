@@ -79,14 +79,6 @@ bool networkSetup(bool isHost, const char *ip) {
     return true;
 }
 
-bool sendMove(MovePacket move) {
-    return send(sockfd, &move, sizeof(move), 0) == sizeof(move);
-}
-
-bool receiveMove(MovePacket *move) {
-    return recv(sockfd, move, sizeof(*move), 0) == sizeof(*move);
-}
-
 void closeNetwork() {
     if (sockfd != -1) {
         close(sockfd);
@@ -98,7 +90,36 @@ void closeNetwork() {
     }
 }
 
-// 🧩 This function lets your game check if the client has connected
+//  Check if the client has connected
 bool isClientConnected() {
     return clientConnected;
+}
+
+int sendBoard(int sock, int Board[8][8]) {
+    ssize_t bytesSent = send(sock, Board, sizeof(int) * 8 * 8, 0);
+    if (bytesSent != sizeof(int) * 8 * 8) {
+        perror("sendBoard: failed to send full board");
+        return -1;
+    }
+    return 0;
+}
+
+int recvBoard(int sock, int Board[8][8]) {
+    ssize_t totalReceived = 0;
+    ssize_t expected = sizeof(int) * 8 * 8;
+    char *buffer = (char *)Board;
+
+    while (totalReceived < expected) {
+        ssize_t bytes = recv(sock, buffer + totalReceived, expected - totalReceived, 0);
+        if (bytes <= 0) {
+            perror("recvBoard: failed to receive full board");
+            return -1;
+        }
+        totalReceived += bytes;
+    }
+    return 0;
+}
+
+int getSocketFD() {
+    return sockfd;
 }

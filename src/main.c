@@ -66,10 +66,12 @@ int main(){
     selectedPiece.col= -1;
 
     //Main game loop
-    int winner;
+    int winner=-1;
     int PlayerTurn=2;
     int row=-1,col=-1;
     bool serverInitPlay=true; //need for the first ever move by server to keep screen updated
+    float turnTimer = 30.0f;  // 30 seconds per turn
+    bool timerEnabled = true; // Optional: to control it
     while (!WindowShouldClose())
     {
         //play and loop songif (IsKeyPressed(KEY_M))
@@ -121,8 +123,16 @@ int main(){
                 
             if (gameMode == 2) { //cpu mode
                 BeginDrawing();
+                
                 if(PlayerTurn == 2){    //user turn
-                    
+                    //Timer logic 
+                    if (winner==-1 && timerEnabled && turnTimer > 0) {
+                        turnTimer -= GetFrameTime();
+                        if (turnTimer < 0) {
+                            turnTimer = 0;
+                        }
+                    }
+
                     //When a box is clicked
                     if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
                     {
@@ -132,6 +142,7 @@ int main(){
                         log_info("\n#MAIN_FUNC selection made: X:%d Y:%d...",row,col);
                         //Logic for steps to take if a box is clicked
                         boxClicked(row, col, &selectedPiece.flag, &selectedPiece.row, &selectedPiece.col, Board, &PlayerTurn);    
+                        if(PlayerTurn == 1){turnTimer = 30.0f;} // Reset timer for next turn
                     }
                 }else if(PlayerTurn == 1){  //cpu turn
                     cpuMakeMove(Board,&PlayerTurn);
@@ -175,6 +186,9 @@ int main(){
                 drawPieces(offsetX, offsetY, cellSize, selectedPiece.row, selectedPiece.col, Board);
                 const char* turnMsg = (PlayerTurn == 1) ? "PLAYER 1 TURN" : "PLAYER 2 TURN";
                 DrawText(turnMsg, 20, 20, 30, (PlayerTurn == 1) ? BLUE : RED);
+                char timerText[32];
+                sprintf(timerText, "Time left: %02d", (int)turnTimer);
+                DrawText(timerText, 20, 60, 28, BEIGE);
                 EndDrawing();
             }else if(gameMode == 1){ //lan mode
                 

@@ -270,6 +270,32 @@ void resetGame(int Board[BOARD_SIZE][BOARD_SIZE], int *sPFlag, int *sPRow, int *
     *sPCol = -1;
 }
 
+int countPawns(int board[BOARD_SIZE][BOARD_SIZE], int playerPawn) {
+    int count = 0;
+    for (int y = 0; y < BOARD_SIZE; y++) {
+        for (int x = 0; x < BOARD_SIZE; x++) {
+            if (board[y][x] == playerPawn) {
+                count++;
+            }
+        }
+    }
+    return count;
+}
+
+int countKings(int board[BOARD_SIZE][BOARD_SIZE], int playerKing) {
+    int count = 0;
+    for (int y = 0; y < BOARD_SIZE; y++) {
+        for (int x = 0; x < BOARD_SIZE; x++) {
+            if (board[y][x] == playerKing) {
+                count++;
+            }
+        }
+    }
+    return count;
+}
+
+
+
 void switchPlayer(int *PlayerTurn){
     if(*PlayerTurn == 1) *PlayerTurn=2;
     else if(*PlayerTurn == 2) *PlayerTurn=1;

@@ -57,6 +57,10 @@ void tryPromoteToKing(int row, int col, int Board[BOARD_SIZE][BOARD_SIZE]);
 
 void resetGame(int Board[BOARD_SIZE][BOARD_SIZE], int *sPFlag, int *sPRow, int *sPCol);
 
+int countPawns(int board[BOARD_SIZE][BOARD_SIZE], int playerPawn);
+
+int countKings(int board[BOARD_SIZE][BOARD_SIZE], int playerKing);
+
 void switchPlayer(int *PlayerTurn);
 
 

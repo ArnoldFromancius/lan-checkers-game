@@ -56,6 +56,28 @@ void drawPieces(int offsetX, int offsetY, int cellSize, int selectedRow, int sel
     }
 }
 
+void drawPlayerPieceCounts(int board[BOARD_SIZE_T][BOARD_SIZE_T], int player) {
+    int screenWidth = GetScreenWidth();
+    int pawnType = (player == 1) ? P1_PAWN : P2_PAWN;
+    int kingType = (player == 1) ? P1_KING : P2_KING;
+    Color color = (player == 1) ? BLUE : RED;
+    int xPos = 40;
+    int yBase = 100;
+
+    int pawns = countPawns(board, pawnType);
+    int kings = countKings(board, kingType);
+    int opponentPawnType = (player == 1) ? P2_PAWN : P1_PAWN;
+    int opponentKingType = (player == 1) ? P2_KING : P1_KING;
+    int captures = 12 - (countPawns(board, opponentPawnType) + countKings(board, opponentKingType));
+
+    DrawText(TextFormat("Player %d:", player), xPos, yBase, 20, color);
+    DrawText(TextFormat("Pawns: %d", pawns), xPos, yBase + 25, 20, color);
+    DrawText(TextFormat("Kings: %d", kings), xPos, yBase + 50, 20, color);
+    DrawText(TextFormat("Kings: %d", kings), xPos, yBase + 50, 20, color);
+    DrawText(TextFormat("Captures: %d", captures), xPos, yBase + 75, 20, color);
+
+}
+
 
 void drawMenu(int selectedMenuOption) {
     int screenWidth = GetScreenWidth(); 

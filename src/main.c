@@ -193,7 +193,7 @@ int main(){
                 int barMaxWidth = 200;
                 int barHeight = 18;
                 int barX = 20;
-                int barY = 55;
+                int barY = 65;
                 int barWidth = (int)((timeLeft / TURN_TIME_LIMIT) * barMaxWidth);
 
                 DrawRectangle(barX, barY, barMaxWidth, barHeight, DARKGRAY);
@@ -204,6 +204,7 @@ int main(){
                 char timerText[64];
                 snprintf(timerText, sizeof(timerText), "Time: %.1fs", timeLeft);
                 DrawText(timerText, barX + barMaxWidth + 10, barY, 20, LIGHTGRAY);
+                drawPlayerPieceCounts(Board, PlayerTurn);
                 EndDrawing();
             
             }else if(gameMode == 1){ //lan mode

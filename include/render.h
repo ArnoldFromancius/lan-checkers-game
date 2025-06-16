@@ -13,5 +13,6 @@ void drawMenu(int selectedMenuOption);
 void drawLanMenu(int selectedMenuOption);
 void drawLanServerConnect(void);
 void drawLanClientConnect(char ClientIpBuffer[]);
+void drawPlayerPieceCounts(int board[BOARD_SIZE_T][BOARD_SIZE_T], int player);
 
 #endif

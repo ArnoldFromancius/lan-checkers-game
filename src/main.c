@@ -181,7 +181,7 @@ int main(){
                 drawPieces(offsetX, offsetY, cellSize, selectedPiece.row, selectedPiece.col, Board);
 
                 // --- TURN TEXT ---
-                const char* turnMsg = (PlayerTurn == 1) ? "PLAYER 1 TURN" : "PLAYER 2 TURN";
+                const char* turnMsg = (PlayerTurn == 1) ? "PLAYER 1' TURN" : "PLAYER 2' TURN";
                 Color turnColor = (PlayerTurn == 1) ? BLUE : RED;
                 DrawText(turnMsg, 20, 20, 30, turnColor);
 

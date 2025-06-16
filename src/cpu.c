@@ -22,15 +22,34 @@ int simulateMove(int board[BOARD_SIZE][BOARD_SIZE], MoveChain move, int isJump) 
         board[toY][toX] = piece;
         board[fromY][fromX] = EMPTY_BOX;
 
-        if (abs(toY - fromY) == 2) {
-            int midY = (fromY + toY) / 2;
-            int midX = (fromX + toX) / 2;
-            board[midY][midX] = EMPTY_BOX;
-            captures++;
+        if (isJump && abs(toY - fromY) > 1 && abs(toY - fromY) == abs(toX - fromX)) {
+            int dY = (toY - fromY) > 0 ? 1 : -1;
+            int dX = (toX - fromX) > 0 ? 1 : -1;
+
+            int y = fromY + dY;
+            int x = fromX + dX;
+
+            while (y != toY && x != toX) {
+                int target = board[y][x];
+                if ((piece == P1_PAWN || piece == P1_KING) && (target == P2_PAWN || target == P2_KING)) {
+                    board[y][x] = EMPTY_BOX;
+                    captures++;
+                    break;
+                } else if ((piece == P2_PAWN || piece == P2_KING) && (target == P1_PAWN || target == P1_KING)) {
+                    board[y][x] = EMPTY_BOX;
+                    captures++;
+                    break;
+                }
+                y += dY;
+                x += dX;
+            }
         }
 
+        // Promote if needed
         if (piece == P1_PAWN && toY == BOARD_SIZE - 1)
             board[toY][toX] = P1_KING;
+        else if (piece == P2_PAWN && toY == 0)
+            board[toY][toX] = P2_KING;
     }
 
     return isJump ? captures : 1;
@@ -42,38 +61,67 @@ void applyMove(int board[BOARD_SIZE][BOARD_SIZE], MoveChain move, int piece) {
 
 void findBestCapture(int board[BOARD_SIZE][BOARD_SIZE], int x, int y, int piece, MoveChain* current, MoveChain* best) {
     int found = 0;
-    int directions[4][2] = {{-2, -2}, {-2, 2}, {2, -2}, {2, 2}};
+
+    int directions[4][2] = {{-1, -1}, {-1, 1}, {1, -1}, {1, 1}};
 
     for (int i = 0; i < 4; i++) {
-        int toY = y + directions[i][0];
-        int toX = x + directions[i][1];
+        int dy = directions[i][0];
+        int dx = directions[i][1];
 
-        int midY = y + directions[i][0] / 2;
-        int midX = x + directions[i][1] / 2;
+        int j = 1; // step multiplier for kings
+        while (1) {
+            int midY = y + dy * j;
+            int midX = x + dx * j;
+            int toY = y + dy * (j + 1);
+            int toX = x + dx * (j + 1);
 
-        if (toX < 0 || toX >= BOARD_SIZE || toY < 0 || toY >= BOARD_SIZE)
-            continue;
+            if (toY < 0 || toY >= BOARD_SIZE || toX < 0 || toX >= BOARD_SIZE)
+                break;
 
-        int target = board[midY][midX];
-        int dest = board[toY][toX];
+            int target = board[midY][midX];
+            int dest = board[toY][toX];
 
-        if ((piece == P1_PAWN || piece == P1_KING) &&
-            (target == P2_PAWN || target == P2_KING) &&
-            dest == EMPTY_BOX) {
+            int isEnemy =
+                (piece == P1_PAWN || piece == P1_KING) ? (target == P2_PAWN || target == P2_KING)
+                : (piece == P2_PAWN || piece == P2_KING) ? (target == P1_PAWN || target == P1_KING)
+                : 0;
 
-            int tempBoard[BOARD_SIZE][BOARD_SIZE];
-            copyBoard(board, tempBoard);
+            if (isEnemy && dest == EMPTY_BOX) {
+                // Ensure path to enemy is clear for kings
+                int blocked = 0;
+                if (piece == P1_KING || piece == P2_KING) {
+                    for (int k = 1; k < j; k++) {
+                        int checkY = y + dy * k;
+                        int checkX = x + dx * k;
+                        if (board[checkY][checkX] != EMPTY_BOX) {
+                            blocked = 1;
+                            break;
+                        }
+                    }
+                }
 
-            MoveChain next = *current;
-            next.path[next.length++] = (Coord){toY, toX};
+                if (!blocked) {
+                    int tempBoard[BOARD_SIZE][BOARD_SIZE];
+                    copyBoard(board, tempBoard);
 
-            simulateMove(tempBoard, next, 1);
-            findBestCapture(tempBoard, toX, toY, tempBoard[toY][toX], &next, best);
+                    MoveChain next = *current;
+                    next.path[next.length++] = (Coord){toY, toX};
 
-            if (next.length > best->length) {
-                *best = next;
-                found = 1;
+                    simulateMove(tempBoard, next, 1);
+                    findBestCapture(tempBoard, toX, toY, tempBoard[toY][toX], &next, best);
+
+                    if (next.length > best->length) {
+                        *best = next;
+                        found = 1;
+                    }
+                }
             }
+
+            // Pawns can only jump 2 steps
+            if (piece == P1_PAWN || piece == P2_PAWN)
+                break;
+
+            j++; // kings keep scanning diagonally
         }
     }
 

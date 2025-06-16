@@ -37,29 +37,29 @@ void initBoard(int Board[BOARD_SIZE][BOARD_SIZE]){
 }
 
 void boxClicked(int row, int col, int *sPFlag, int *sPRow, int *sPCol, int Board[BOARD_SIZE][BOARD_SIZE], int *playerTurn) {
-    //for debugging purposed
     log_info("\n#BOX_CLICKED -");
-    log_info("$highlighted_Piece: flag: %d row: %d col: %d",*sPFlag,*sPRow,*sPCol);
-    log_info("$selected_piece: row: %d col: %d",row,col);
+    log_info("$highlighted_Piece: flag: %d row: %d col: %d", *sPFlag, *sPRow, *sPCol);
+    log_info("$selected_piece: row: %d col: %d", row, col);
 
     if (row < 0 || row >= BOARD_SIZE || col < 0 || col >= BOARD_SIZE)
         return;
 
     int clickedPiece = Board[row][col];
-    //check if appropriate player's turn playing
+
+    // Check if appropriate player's piece is selected or already in progress
     if (*playerTurn == 1) {
-        if ((clickedPiece != P1_PAWN && clickedPiece != P1_KING) && (*sPFlag != P1_PAWN && *sPFlag != P1_KING)){
+        if ((clickedPiece != P1_PAWN && clickedPiece != P1_KING) && (*sPFlag != P1_PAWN && *sPFlag != P1_KING)) {
             return;
-        }   
+        }
     } else if (*playerTurn == 2) {
-        if ((clickedPiece != P2_PAWN && clickedPiece != P2_KING) && (*sPFlag != P2_PAWN && *sPFlag != P2_KING)){
+        if ((clickedPiece != P2_PAWN && clickedPiece != P2_KING) && (*sPFlag != P2_PAWN && *sPFlag != P2_KING)) {
             return;
         }
     }
-   
-    //Select a piece
-    if ((clickedPiece == P1_PAWN || clickedPiece == P2_PAWN || 
-        clickedPiece == P1_KING || clickedPiece == P2_KING)) {
+
+    // Select a piece
+    if ((clickedPiece == P1_PAWN || clickedPiece == P2_PAWN ||
+         clickedPiece == P1_KING || clickedPiece == P2_KING)) {
 
         *sPFlag = clickedPiece;
         *sPRow = row;
@@ -67,31 +67,52 @@ void boxClicked(int row, int col, int *sPFlag, int *sPRow, int *sPCol, int Board
         return;
     }
 
-    // Attempt move
+    // Attempt move or jump
     if (*sPFlag != EMPTY_BOX) {
         int fromRow = *sPRow;
         int fromCol = *sPCol;
         int toRow = row;
         int toCol = col;
         int piece = *sPFlag;
-        int tmp;
+
         if (isValidMove(fromRow, fromCol, toRow, toCol, piece, Board)) {
             log_info("#ValidMove");
             Board[fromRow][fromCol] = EMPTY_BOX;
             Board[toRow][toCol] = piece;
             PlayMoveSound();
             tryPromoteToKing(toRow, toCol, Board);
-            switchPlayer(playerTurn); 
+            switchPlayer(playerTurn);
         }
         else if (isValidJump(fromRow, fromCol, toRow, toCol, piece, Board)) {
-            int midRow = (fromRow + toRow) / 2;
-            int midCol = (fromCol + toCol) / 2;
+            // Clear origin
             Board[fromRow][fromCol] = EMPTY_BOX;
-            Board[midRow][midCol] = EMPTY_BOX;
-            Board[toRow][toCol] = piece; 
+
+            // Find and remove the jumped opponent (works for flying kings)
+            int dRow = (toRow > fromRow) ? 1 : -1;
+            int dCol = (toCol > fromCol) ? 1 : -1;
+            int r = fromRow + dRow;
+            int c = fromCol + dCol;
+
+            while (r != toRow && c != toCol) {
+                int midPiece = Board[r][c];
+                if ((piece == P1_PAWN || piece == P1_KING) && (midPiece == P2_PAWN || midPiece == P2_KING)) {
+                    Board[r][c] = EMPTY_BOX;
+                    break;
+                }
+                if ((piece == P2_PAWN || piece == P2_KING) && (midPiece == P1_PAWN || midPiece == P1_KING)) {
+                    Board[r][c] = EMPTY_BOX;
+                    break;
+                }
+                r += dRow;
+                c += dCol;
+            }
+
+            // Place piece at new location
+            Board[toRow][toCol] = piece;
             PlayCaptureSound();
             tryPromoteToKing(toRow, toCol, Board);
-            // Check for more jumps
+
+            // Check for further jumps
             if (hasMoreJumps(toRow, toCol, piece, Board)) {
                 *sPRow = toRow;
                 *sPCol = toCol;
@@ -102,9 +123,10 @@ void boxClicked(int row, int col, int *sPFlag, int *sPRow, int *sPCol, int Board
                 *sPFlag = EMPTY_BOX;
                 switchPlayer(playerTurn);
             }
-        }   
+        }
     }
 }
+
 
 int checkWinCondition(int Board[BOARD_SIZE][BOARD_SIZE]) {
     int p1HasPieces = countPieces(1, Board);
@@ -131,73 +153,135 @@ int isValidMove(int fromRow, int fromCol, int toRow, int toCol, int piece, int b
     if (toRow < 0 || toRow >= BOARD_SIZE || toCol < 0 || toCol >= BOARD_SIZE)
         return 0; // off board
     
-    if (board[toRow][toCol] == ILLEGAL_SQUARE)
-        return 0; // cannot move to illegal square
-
-    if (board[toRow][toCol] != EMPTY_BOX)
-        return 0; // destination not empty
+    if (board[toRow][toCol] == ILLEGAL_SQUARE || board[toRow][toCol] != EMPTY_BOX)
+        return 0; // can't move to illegal or occupied square
 
     int dRow = toRow - fromRow;
     int dCol = toCol - fromCol;
 
-    if (abs(dRow) != 1 || abs(dCol) != 1)
-        return 0; // must move one step diagonally
+    if (abs(dRow) != abs(dCol))
+        return 0; // must move diagonally
 
     int direction = getPieceDirection(piece);
 
-    // If it's a pawn (not king), it can only move forward
-    if (board[fromRow][fromCol] == piece && dRow != direction)
-        return 0;
+    // Normal pawns: only one step forward
+    if ((piece == P1_PAWN || piece == P2_PAWN)) {
+        if (abs(dRow) != 1 || abs(dCol) != 1)
+            return 0;
+        if (dRow != direction)
+            return 0;
+        return 1;
+    }
 
-    return 1; // legal move
-}
+    // Kings: can fly diagonally if path is clear
+    if (piece == P1_KING || piece == P2_KING) {
+        int stepY = (dRow > 0) ? 1 : -1;
+        int stepX = (dCol > 0) ? 1 : -1;
 
-int isValidJump(int fromRow, int fromCol, int toRow, int toCol, int piece, int Board[BOARD_SIZE][BOARD_SIZE]) {
-    int dRow = toRow - fromRow;
-    int dCol = toCol - fromCol;
-
-    if (abs(dRow) == 2 && abs(dCol) == 2) {
-        int midRow = (fromRow + toRow) / 2;
-        int midCol = (fromCol + toCol) / 2;
-        int middlePiece = Board[midRow][midCol];
-
-        if (Board[toRow][toCol] != EMPTY_BOX)
-            return 0; // must land on empty square
-        
-        if (Board[toRow][toCol] == ILLEGAL_SQUARE)
-            return 0; // cannot land on illegal square
-
-        // P1 captures P2
-        if ((piece == P1_PAWN || piece == P1_KING) &&
-            (middlePiece == P2_PAWN || middlePiece == P2_KING)) {
-            return 1;
+        int y = fromRow + stepY;
+        int x = fromCol + stepX;
+        while (y != toRow && x != toCol) {
+            if (board[y][x] != EMPTY_BOX)
+                return 0; // path blocked
+            y += stepY;
+            x += stepX;
         }
-
-        // P2 captures P1
-        if ((piece == P2_PAWN || piece == P2_KING) &&
-            (middlePiece == P1_PAWN || middlePiece == P1_KING)) {
-            return 1;
-        }
+        return 1;
     }
 
     return 0;
 }
 
+int isValidJump(int fromRow, int fromCol, int toRow, int toCol, int piece, int Board[BOARD_SIZE][BOARD_SIZE]) {
+    if (toRow < 0 || toRow >= BOARD_SIZE || toCol < 0 || toCol >= BOARD_SIZE)
+        return 0;
+
+    if (Board[toRow][toCol] != EMPTY_BOX || Board[toRow][toCol] == ILLEGAL_SQUARE)
+        return 0;
+
+    int dRow = toRow - fromRow;
+    int dCol = toCol - fromCol;
+
+    if (abs(dRow) != abs(dCol))
+        return 0; // must move diagonally
+
+    int stepY = (dRow > 0) ? 1 : -1;
+    int stepX = (dCol > 0) ? 1 : -1;
+
+    int y = fromRow + stepY;
+    int x = fromCol + stepX;
+    int opponentFound = 0;
+
+    while (y != toRow && x != toCol) {
+        int cell = Board[y][x];
+
+        if (cell == ILLEGAL_SQUARE) return 0;
+
+        // Check for opponents or blocking
+        if (piece == P1_PAWN || piece == P1_KING) {
+            if (cell == P2_PAWN || cell == P2_KING) {
+                opponentFound++;
+                if (opponentFound > 1) return 0;
+            } else if (cell != EMPTY_BOX) {
+                return 0; // blocked by own piece
+            }
+        } else if (piece == P2_PAWN || piece == P2_KING) {
+            if (cell == P1_PAWN || cell == P1_KING) {
+                opponentFound++;
+                if (opponentFound > 1) return 0;
+            } else if (cell != EMPTY_BOX) {
+                return 0; // blocked by own piece
+            }
+        }
+
+        y += stepY;
+        x += stepX;
+    }
+
+    // Pawns: only 2-step jump with 1 enemy
+    if ((piece == P1_PAWN || piece == P2_PAWN) && abs(dRow) == 2 && opponentFound == 1)
+        return 1;
+
+    // Kings: can jump multiple squares but only over one opponent
+    if ((piece == P1_KING || piece == P2_KING) && opponentFound == 1)
+        return 1;
+
+    return 0;
+}
+
 int hasMoreJumps(int row, int col, int piece, int Board[BOARD_SIZE][BOARD_SIZE]) {
-    int dirs[4][2] = {
-        {-2, -2}, {-2, 2}, {2, -2}, {2, 2}
+    int directions[4][2] = {
+        {-1, -1}, {-1, 1}, {1, -1}, {1, 1}
     };
 
     for (int i = 0; i < 4; i++) {
-        int newRow = row + dirs[i][0];
-        int newCol = col + dirs[i][1];
+        int dy = directions[i][0];
+        int dx = directions[i][1];
 
-        if (newRow >= 0 && newRow < BOARD_SIZE && newCol >= 0 && newCol < BOARD_SIZE) {
-            if (isValidJump(row, col, newRow, newCol, piece, Board)) {
-                return 1;
+        int y = row + dy;
+        int x = col + dx;
+
+        // For pawns, check only one jump in that direction (2 tiles away)
+        if (piece == P1_PAWN || piece == P2_PAWN) {
+            int jumpRow = row + dy * 2;
+            int jumpCol = col + dx * 2;
+
+            if (jumpRow >= 0 && jumpRow < BOARD_SIZE && jumpCol >= 0 && jumpCol < BOARD_SIZE) {
+                if (isValidJump(row, col, jumpRow, jumpCol, piece, Board))
+                    return 1;
+            }
+        } else {
+            // For kings: scan in all diagonal directions for any valid jump
+            while (y >= 0 && y < BOARD_SIZE && x >= 0 && x < BOARD_SIZE) {
+                if (abs(y - row) >= 2 && isValidJump(row, col, y, x, piece, Board))
+                    return 1;
+
+                y += dy;
+                x += dx;
             }
         }
     }
+
     return 0;
 }
 
@@ -294,180 +378,9 @@ int countKings(int board[BOARD_SIZE][BOARD_SIZE], int playerKing) {
     return count;
 }
 
-
-
 void switchPlayer(int *PlayerTurn){
     if(*PlayerTurn == 1) *PlayerTurn=2;
     else if(*PlayerTurn == 2) *PlayerTurn=1;
     log_info("current Player: %d", *PlayerTurn);
 }
 
-/*
-void cpuMakeMove(int Board[BOARD_SIZE][BOARD_SIZE], int *PlayerTurn) {
-    // --- First: Try to find a single piece that can capture ---
-    for (int sy = 0; sy < BOARD_SIZE; sy++) {
-        for (int sx = 0; sx < BOARD_SIZE; sx++) {
-            int piece = Board[sy][sx];
-            if (piece != P1_PAWN && piece != P1_KING) continue;
-
-            // Try all diagonal jump directions
-            for (int dy = -2; dy <= 2; dy += 4) {
-                for (int dx = -2; dx <= 2; dx += 4) {
-                    int tx = sx + dx;
-                    int ty = sy + dy;
-
-                    if (isValidJump(sy, sx, ty, tx, piece, Board)) {
-                        // Capture found: lock to this piece
-                        int cx = sx;
-                        int cy = sy;
-                        int currentPiece = piece;
-
-                        // Perform initial capture
-                        while (1) {
-                            int captured = 0;
-
-                            for (int jdy = -2; jdy <= 2; jdy += 4) {
-                                for (int jdx = -2; jdx <= 2; jdx += 4) {
-                                    int nx = cx + jdx;
-                                    int ny = cy + jdy;
-
-                                    if (isValidJump(cy, cx, ny, nx, currentPiece, Board)) {
-                                        // Perform the capture
-                                        Board[ny][nx] = currentPiece;
-                                        Board[cy][cx] = EMPTY_BOX;
-                                        Board[(cy + ny) / 2][(cx + nx) / 2] = EMPTY_BOX;
-
-                                        // Check for kinging
-                                        if (ny == BOARD_SIZE - 1 && currentPiece == P1_PAWN) {
-                                            Board[ny][nx] = P1_KING;
-                                            currentPiece = P1_KING;
-                                        }
-
-                                        cx = nx;
-                                        cy = ny;
-                                        captured = 1;
-                                        break; // break inner dx/dy loop
-                                    }
-                                }
-                                if (captured) break;
-                            }
-
-                            if (!captured) break;
-                        }
-
-                        *PlayerTurn = 2;
-                        log_board_state(Board);
-                        return; // only one piece allowed to act
-                    }
-                }
-            }
-        }
-    }
-
-    // --- No captures available: try normal safe move ---
-    int moveList[100][4];  // sx, sy, dx, dy
-    int moveCount = 0;
-
-    for (int sy = 0; sy < BOARD_SIZE; sy++) {
-        for (int sx = 0; sx < BOARD_SIZE; sx++) {
-            int piece = Board[sy][sx];
-            if (piece != P1_PAWN && piece != P1_KING) continue;
-
-            int directions[2] = { -1, 1 };
-            for (int i = 0; i < 2; i++) {
-                int dx = directions[i];
-                int dy = (piece == P1_KING) ? directions[i] : 1;
-
-                int tx = sx + dx;
-                int ty = sy + dy;
-
-                if (isValidMove(sy, sx, ty, tx, piece, Board)) {
-                    // Check if landing square is safe
-                    int safe = 1;
-                    for (int ey = -1; ey <= 1; ey += 2) {
-                        for (int ex = -1; ex <= 1; ex += 2) {
-                            int ox = tx + ex;
-                            int oy = ty + ey;
-                            int jx = tx - ex;
-                            int jy = ty - ey;
-                            if (ox >= 0 && ox < BOARD_SIZE &&
-                                oy >= 0 && oy < BOARD_SIZE &&
-                                jx >= 0 && jx < BOARD_SIZE &&
-                                jy >= 0 && jy < BOARD_SIZE &&
-                                (Board[oy][ox] == P2_PAWN || Board[oy][ox] == P2_KING) &&
-                                Board[jy][jx] == EMPTY_BOX) {
-                                safe = 0;
-                            }
-                        }
-                    }
-
-                    if (safe) {
-                        moveList[moveCount][0] = sx;
-                        moveList[moveCount][1] = sy;
-                        moveList[moveCount][2] = tx;
-                        moveList[moveCount][3] = ty;
-                        moveCount++;
-                    }
-                }
-            }
-        }
-    }
-
-    if (moveCount > 0) {
-        // Choose the move that advances the furthest
-        int bestIndex = 0;
-        int maxRow = moveList[0][3];
-        for (int i = 1; i < moveCount; i++) {
-            if (moveList[i][3] > maxRow) {
-                maxRow = moveList[i][3];
-                bestIndex = i;
-            }
-        }
-
-        int sx = moveList[bestIndex][0];
-        int sy = moveList[bestIndex][1];
-        int dx = moveList[bestIndex][2];
-        int dy = moveList[bestIndex][3];
-
-        Board[dy][dx] = Board[sy][sx];
-        Board[sy][sx] = EMPTY_BOX;
-
-        if (dy == BOARD_SIZE - 1 && Board[dy][dx] == P1_PAWN) {
-            Board[dy][dx] = P1_KING;
-        }
-
-        *PlayerTurn = 2;
-    }
-
-    log_board_state(Board);
-}
-*/
-
-/*
-void handleGameOver(int winner, Texture2D background, int screenWidth, int screenHeight, int Board[BOARD_SIZE][BOARD_SIZE], Selection* selectedPiece) {
-    const char *message1 = (winner == 1) ? "PLAYER 1 WINS!" : "PLAYER 2 WINS!";
-    const char *message2 =  "Press ENTER to restart, ESC to quit...";
-    int message1FontSize = 50;
-    int message2FontSize = 35;
-    int message1Width = MeasureText(message1, message1FontSize);
-    int message2Width = MeasureText(message2, message2FontSize);
-
-    while (!WindowShouldClose()) {
-        BeginDrawing();
-        ClearBackground(RAYWHITE);
-        DrawTexture(background, 0, 0, WHITE);
-        DrawText(message1, screenWidth/2 - message1Width/2, 400, message1FontSize, BLUE);
-        DrawText(message2, screenWidth/2 - message2Width/2, 480, message2FontSize, WHITE);
-        EndDrawing();
-
-        if (IsKeyPressed(KEY_ENTER)) {
-            resetGame(Board, &selectedPiece->flag, &selectedPiece->row, &selectedPiece->col);
-            initBoard(Board);
-            break;
-        } else if (IsKeyPressed(KEY_ESCAPE)) {
-            CloseWindow();
-            exit(0);
-        }
-    }
-}
-    */

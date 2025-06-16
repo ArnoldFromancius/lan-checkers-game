@@ -70,8 +70,9 @@ int main(){
     int PlayerTurn=2;
     int row=-1,col=-1;
     bool serverInitPlay=true; //need for the first ever move by server to keep screen updated
-    float turnTimer = 30.0f;  // 30 seconds per turn
-    bool timerEnabled = true; // Optional: to control it
+    //timer settings    
+    float turnStartTime = 0.0f;
+    const float TURN_TIME_LIMIT = 60.0f; // seconds
     while (!WindowShouldClose())
     {
         //play and loop songif (IsKeyPressed(KEY_M))
@@ -125,14 +126,6 @@ int main(){
                 BeginDrawing();
                 
                 if(PlayerTurn == 2){    //user turn
-                    //Timer logic 
-                    if (winner==-1 && timerEnabled && turnTimer > 0) {
-                        turnTimer -= GetFrameTime();
-                        if (turnTimer < 0) {
-                            turnTimer = 0;
-                        }
-                    }
-
                     //When a box is clicked
                     if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
                     {
@@ -142,10 +135,11 @@ int main(){
                         log_info("\n#MAIN_FUNC selection made: X:%d Y:%d...",row,col);
                         //Logic for steps to take if a box is clicked
                         boxClicked(row, col, &selectedPiece.flag, &selectedPiece.row, &selectedPiece.col, Board, &PlayerTurn);    
-                        if(PlayerTurn == 1){turnTimer = 30.0f;} // Reset timer for next turn
+                         if(PlayerTurn == 1){turnStartTime = GetTime();}
                     }
                 }else if(PlayerTurn == 1){  //cpu turn
                     cpuMakeMove(Board,&PlayerTurn);
+                    turnStartTime = GetTime();
                 }
                 
                 int winner = checkWinCondition(Board);
@@ -182,14 +176,36 @@ int main(){
                 //Display changes 
                 ClearBackground(BACKGROUND_COLOR);
                 DrawTexture(background, 0, 0, WHITE);
+
                 drawBoard(offsetX, offsetY, cellSize, row, col, Board);
                 drawPieces(offsetX, offsetY, cellSize, selectedPiece.row, selectedPiece.col, Board);
+
+                // --- TURN TEXT ---
                 const char* turnMsg = (PlayerTurn == 1) ? "PLAYER 1 TURN" : "PLAYER 2 TURN";
-                DrawText(turnMsg, 20, 20, 30, (PlayerTurn == 1) ? BLUE : RED);
-                char timerText[32];
-                sprintf(timerText, "Time left: %02d", (int)turnTimer);
-                DrawText(timerText, 20, 60, 28, BEIGE);
+                Color turnColor = (PlayerTurn == 1) ? BLUE : RED;
+                DrawText(turnMsg, 20, 20, 30, turnColor);
+
+                // --- TIMER BAR ---
+                float timeElapsed = GetTime() - turnStartTime;
+                float timeLeft = TURN_TIME_LIMIT - timeElapsed;
+                if (timeLeft < 0) timeLeft = 0;
+
+                int barMaxWidth = 200;
+                int barHeight = 18;
+                int barX = 20;
+                int barY = 55;
+                int barWidth = (int)((timeLeft / TURN_TIME_LIMIT) * barMaxWidth);
+
+                DrawRectangle(barX, barY, barMaxWidth, barHeight, DARKGRAY);
+                DrawRectangle(barX, barY, barWidth, barHeight, SKYBLUE);
+                DrawRectangleLines(barX, barY, barMaxWidth, barHeight, RAYWHITE);
+
+                //Draw timer text next to bar
+                char timerText[64];
+                snprintf(timerText, sizeof(timerText), "Time: %.1fs", timeLeft);
+                DrawText(timerText, barX + barMaxWidth + 10, barY, 20, LIGHTGRAY);
                 EndDrawing();
+            
             }else if(gameMode == 1){ //lan mode
                 
                 //if we are server

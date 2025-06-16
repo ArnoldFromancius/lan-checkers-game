@@ -17,6 +17,15 @@ typedef enum {
     NETWORK_CONNECT_STATE,
 } GameState;
 
+//for cpu gameplay(moves)
+#define MAX_JUMP_CHAIN 12
+typedef struct {
+    int startX, startY;
+    int pathX[MAX_JUMP_CHAIN];
+    int pathY[MAX_JUMP_CHAIN];
+    int length;  // number of jumps in chain
+    int finalX, finalY;
+} Move;
 
 void initBoard(int [BOARD_SIZE][BOARD_SIZE]);
 
@@ -39,6 +48,8 @@ int hasMoreJumps(int row, int col, int piece, int Board[BOARD_SIZE][BOARD_SIZE])
 int hasValidMoves(int player, int Board[BOARD_SIZE][BOARD_SIZE]);
 
 int canCapture(int x, int y, int piece, int Board[BOARD_SIZE][BOARD_SIZE]);
+
+void simulateCaptureChain(int Board[BOARD_SIZE][BOARD_SIZE], int x, int y, int piece, Move *currentMove, Move *bestMove);
 
 int countPieces(int player, int Board[BOARD_SIZE][BOARD_SIZE]);
 

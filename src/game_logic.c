@@ -276,149 +276,146 @@ void switchPlayer(int *PlayerTurn){
     log_info("current Player: %d", *PlayerTurn);
 }
 
-int canCapture(int x, int y, int piece, int Board[BOARD_SIZE][BOARD_SIZE]) {
-    int directions[2] = { -2, 2 }; // Jump by 2
-    for (int dy = 0; dy < 2; dy++) {
-        for (int dx = 0; dx < 2; dx++) {
-            int newX = x + directions[dx];
-            int newY = y + directions[dy];
-
-            if (isValidJump(y, x, newY, newX, piece, Board)) {
-                return 1;
-            }
-        }
-    }
-    return 0;
-}
-
-
+/*
 void cpuMakeMove(int Board[BOARD_SIZE][BOARD_SIZE], int *PlayerTurn) {
-    int captureMade = 0;
-
-    // --- Check for captures first ---
+    // --- First: Try to find a single piece that can capture ---
     for (int sy = 0; sy < BOARD_SIZE; sy++) {
         for (int sx = 0; sx < BOARD_SIZE; sx++) {
             int piece = Board[sy][sx];
-            if (piece == P1_PAWN || piece == P1_KING) {
-                for (int dy = -2; dy <= 2; dy += 4) {
-                    for (int dx = -2; dx <= 2; dx += 4) {
-                        int dxDest = sx + dx;
-                        int dyDest = sy + dy;
+            if (piece != P1_PAWN && piece != P1_KING) continue;
 
-                        // 🛠 Fixed argument order
-                        if (isValidJump(sy, sx, dyDest, dxDest, piece, Board)) {
-                            // Execute capture
-                            Board[dyDest][dxDest] = piece;
-                            Board[sy][sx] = EMPTY_BOX;
+            // Try all diagonal jump directions
+            for (int dy = -2; dy <= 2; dy += 4) {
+                for (int dx = -2; dx <= 2; dx += 4) {
+                    int tx = sx + dx;
+                    int ty = sy + dy;
 
-                            // 🛠 Corrected mid capture coordinates
-                            int midY = sy + (dyDest - sy) / 2;
-                            int midX = sx + (dxDest - sx) / 2;
-                            Board[midY][midX] = EMPTY_BOX;
+                    if (isValidJump(sy, sx, ty, tx, piece, Board)) {
+                        // Capture found: lock to this piece
+                        int cx = sx;
+                        int cy = sy;
+                        int currentPiece = piece;
 
-                            // Kinging
-                            if (dyDest == BOARD_SIZE - 1 && piece == P1_PAWN) {
-                                Board[dyDest][dxDest] = P1_KING;
+                        // Perform initial capture
+                        while (1) {
+                            int captured = 0;
+
+                            for (int jdy = -2; jdy <= 2; jdy += 4) {
+                                for (int jdx = -2; jdx <= 2; jdx += 4) {
+                                    int nx = cx + jdx;
+                                    int ny = cy + jdy;
+
+                                    if (isValidJump(cy, cx, ny, nx, currentPiece, Board)) {
+                                        // Perform the capture
+                                        Board[ny][nx] = currentPiece;
+                                        Board[cy][cx] = EMPTY_BOX;
+                                        Board[(cy + ny) / 2][(cx + nx) / 2] = EMPTY_BOX;
+
+                                        // Check for kinging
+                                        if (ny == BOARD_SIZE - 1 && currentPiece == P1_PAWN) {
+                                            Board[ny][nx] = P1_KING;
+                                            currentPiece = P1_KING;
+                                        }
+
+                                        cx = nx;
+                                        cy = ny;
+                                        captured = 1;
+                                        break; // break inner dx/dy loop
+                                    }
+                                }
+                                if (captured) break;
                             }
 
-                            captureMade = 1;
-
-                            // Continue multi-jump
-                            int movedPiece = Board[dyDest][dxDest];
-                            if (canCapture(dyDest, dxDest, movedPiece, Board)) {
-                                cpuMakeMove(Board, PlayerTurn);
-                            }else {
-                                *PlayerTurn = 2; 
-                            }
+                            if (!captured) break;
                         }
+
+                        *PlayerTurn = 2;
+                        log_board_state(Board);
+                        return; // only one piece allowed to act
                     }
                 }
             }
         }
     }
 
-    // --- No captures available: try to make a smart move ---
-    if (!captureMade) {
-        int moveList[100][4];  // sx, sy, dx, dy
-        int moveCount = 0;
+    // --- No captures available: try normal safe move ---
+    int moveList[100][4];  // sx, sy, dx, dy
+    int moveCount = 0;
 
-        for (int sy = 0; sy < BOARD_SIZE; sy++) {
-            for (int sx = 0; sx < BOARD_SIZE; sx++) {
-                int piece = Board[sy][sx];
-                if (piece == P1_PAWN || piece == P1_KING) {
-                    int directions[2] = { -1, 1 };
-                    for (int i = 0; i < 2; i++) {
-                        int dx = directions[i];
-                        int dy = (piece == P1_KING) ? directions[i] : 1;
+    for (int sy = 0; sy < BOARD_SIZE; sy++) {
+        for (int sx = 0; sx < BOARD_SIZE; sx++) {
+            int piece = Board[sy][sx];
+            if (piece != P1_PAWN && piece != P1_KING) continue;
 
-                        int dxDest = sx + dx;
-                        int dyDest = sy + dy;
+            int directions[2] = { -1, 1 };
+            for (int i = 0; i < 2; i++) {
+                int dx = directions[i];
+                int dy = (piece == P1_KING) ? directions[i] : 1;
 
-                        // 🛠 Fixed argument order
-                        if (isValidMove(sy, sx, dyDest, dxDest, piece, Board)) {
-                            // Risk check (simplified)
-                            int safe = 1;
-                            for (int ey = -1; ey <= 1; ey += 2) {
-                                for (int ex = -1; ex <= 1; ex += 2) {
-                                    int oppX = dxDest + ex;
-                                    int oppY = dyDest + ey;
-                                    int jumpX = dxDest - ex;
-                                    int jumpY = dyDest - ey;
-                                    if (oppX >= 0 && oppX < BOARD_SIZE &&
-                                        oppY >= 0 && oppY < BOARD_SIZE &&
-                                        jumpX >= 0 && jumpX < BOARD_SIZE &&
-                                        jumpY >= 0 && jumpY < BOARD_SIZE &&
-                                        (Board[oppY][oppX] == P2_PAWN || Board[oppY][oppX] == P2_KING) &&
-                                        Board[jumpY][jumpX] == EMPTY_BOX) {
-                                        safe = 0;
-                                    }
-                                }
-                            }
+                int tx = sx + dx;
+                int ty = sy + dy;
 
-                            if (safe) {
-                                moveList[moveCount][0] = sx;
-                                moveList[moveCount][1] = sy;
-                                moveList[moveCount][2] = dxDest;
-                                moveList[moveCount][3] = dyDest;
-                                moveCount++;
+                if (isValidMove(sy, sx, ty, tx, piece, Board)) {
+                    // Check if landing square is safe
+                    int safe = 1;
+                    for (int ey = -1; ey <= 1; ey += 2) {
+                        for (int ex = -1; ex <= 1; ex += 2) {
+                            int ox = tx + ex;
+                            int oy = ty + ey;
+                            int jx = tx - ex;
+                            int jy = ty - ey;
+                            if (ox >= 0 && ox < BOARD_SIZE &&
+                                oy >= 0 && oy < BOARD_SIZE &&
+                                jx >= 0 && jx < BOARD_SIZE &&
+                                jy >= 0 && jy < BOARD_SIZE &&
+                                (Board[oy][ox] == P2_PAWN || Board[oy][ox] == P2_KING) &&
+                                Board[jy][jx] == EMPTY_BOX) {
+                                safe = 0;
                             }
                         }
+                    }
+
+                    if (safe) {
+                        moveList[moveCount][0] = sx;
+                        moveList[moveCount][1] = sy;
+                        moveList[moveCount][2] = tx;
+                        moveList[moveCount][3] = ty;
+                        moveCount++;
                     }
                 }
             }
         }
+    }
 
-        if (moveCount > 0) {
-            // Pick move with deepest advance
-            int bestIndex = 0;
-            int maxRow = moveList[0][3];
-            for (int i = 1; i < moveCount; i++) {
-                if (moveList[i][3] > maxRow) {
-                    maxRow = moveList[i][3];
-                    bestIndex = i;
-                }
+    if (moveCount > 0) {
+        // Choose the move that advances the furthest
+        int bestIndex = 0;
+        int maxRow = moveList[0][3];
+        for (int i = 1; i < moveCount; i++) {
+            if (moveList[i][3] > maxRow) {
+                maxRow = moveList[i][3];
+                bestIndex = i;
             }
-
-            int sx = moveList[bestIndex][0];
-            int sy = moveList[bestIndex][1];
-            int dx = moveList[bestIndex][2];
-            int dy = moveList[bestIndex][3];
-
-            Board[dy][dx] = Board[sy][sx];
-            Board[sy][sx] = EMPTY_BOX;
-
-            if (dy == BOARD_SIZE - 1 && Board[dy][dx] == P1_PAWN) {
-                Board[dy][dx] = P1_KING;
-            }
-
-            *PlayerTurn = 2;
         }
+
+        int sx = moveList[bestIndex][0];
+        int sy = moveList[bestIndex][1];
+        int dx = moveList[bestIndex][2];
+        int dy = moveList[bestIndex][3];
+
+        Board[dy][dx] = Board[sy][sx];
+        Board[sy][sx] = EMPTY_BOX;
+
+        if (dy == BOARD_SIZE - 1 && Board[dy][dx] == P1_PAWN) {
+            Board[dy][dx] = P1_KING;
+        }
+
+        *PlayerTurn = 2;
     }
 
     log_board_state(Board);
 }
-
-
+*/
 
 /*
 void handleGameOver(int winner, Texture2D background, int screenWidth, int screenHeight, int Board[BOARD_SIZE][BOARD_SIZE], Selection* selectedPiece) {

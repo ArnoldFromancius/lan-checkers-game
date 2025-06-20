@@ -4,6 +4,7 @@
 #include <raylib.h>
 #include "../include/audio.h"
 #include "../include/game_logic.h"
+#include "../include/networking.h"
 #include "../include/log.h"
 
 void initCpu() {
@@ -35,7 +36,7 @@ void initBoard(int Board[BOARD_SIZE][BOARD_SIZE]){
         row++;
     }
 }
-
+/*
 void boxClicked(int row, int col, int *sPFlag, int *sPRow, int *sPCol, int Board[BOARD_SIZE][BOARD_SIZE], int *playerTurn) {
     log_info("\n#BOX_CLICKED -");
     log_info("$highlighted_Piece: flag: %d row: %d col: %d", *sPFlag, *sPRow, *sPCol);
@@ -126,7 +127,160 @@ void boxClicked(int row, int col, int *sPFlag, int *sPRow, int *sPCol, int Board
         }
     }
 }
+*/
+void boxClicked(int row, int col, int *sPFlag, int *sPRow, int *sPCol,
+                int Board[BOARD_SIZE][BOARD_SIZE], int *playerTurn, MovePacket *outMove)
+{
+    log_info("\n#BOX_CLICKED -");
+    log_info("$highlighted_Piece: flag: %d row: %d col: %d", *sPFlag, *sPRow, *sPCol);
+    log_info("$selected_piece: row: %d col: %d", row, col);
 
+    if (row < 0 || row >= BOARD_SIZE || col < 0 || col >= BOARD_SIZE)
+        return;
+
+    int clickedPiece = Board[row][col];
+
+    if (*playerTurn == 1) {
+        if ((clickedPiece != P1_PAWN && clickedPiece != P1_KING) &&
+            (*sPFlag != P1_PAWN && *sPFlag != P1_KING)) {
+            return;
+        }
+    } else if (*playerTurn == 2) {
+        if ((clickedPiece != P2_PAWN && clickedPiece != P2_KING) &&
+            (*sPFlag != P2_PAWN && *sPFlag != P2_KING)) {
+            return;
+        }
+    }
+
+    if ((clickedPiece == P1_PAWN || clickedPiece == P2_PAWN ||
+         clickedPiece == P1_KING || clickedPiece == P2_KING)) {
+        *sPFlag = clickedPiece;
+        *sPRow = row;
+        *sPCol = col;
+        return;
+    }
+
+    if (*sPFlag != EMPTY_BOX) {
+        int fromRow = *sPRow;
+        int fromCol = *sPCol;
+        int toRow = row;
+        int toCol = col;
+        int piece = *sPFlag;
+
+        if (isValidMove(fromRow, fromCol, toRow, toCol, piece, Board)) {
+            log_info("#ValidMove");
+            Board[fromRow][fromCol] = EMPTY_BOX;
+            Board[toRow][toCol] = piece;
+            PlayMoveSound();
+            tryPromoteToKing(toRow, toCol, Board);
+
+            if (outMove) {
+                outMove->fromRow = fromRow;
+                outMove->fromCol = fromCol;
+                outMove->toRow = toRow;
+                outMove->toCol = toCol;
+                outMove->isCapture = 0;
+                outMove->flag = 1;
+                outMove->moreJumps = 0;
+            }
+
+            switchPlayer(playerTurn);
+        }
+        else if (isValidJump(fromRow, fromCol, toRow, toCol, piece, Board)) {
+            Board[fromRow][fromCol] = EMPTY_BOX;
+
+            int dRow = (toRow > fromRow) ? 1 : -1;
+            int dCol = (toCol > fromCol) ? 1 : -1;
+            int r = fromRow + dRow;
+            int c = fromCol + dCol;
+
+            while (r != toRow && c != toCol) {
+                int midPiece = Board[r][c];
+                if ((piece == P1_PAWN || piece == P1_KING) &&
+                    (midPiece == P2_PAWN || midPiece == P2_KING)) {
+                    Board[r][c] = EMPTY_BOX;
+                    break;
+                }
+                if ((piece == P2_PAWN || piece == P2_KING) &&
+                    (midPiece == P1_PAWN || midPiece == P1_KING)) {
+                    Board[r][c] = EMPTY_BOX;
+                    break;
+                }
+                r += dRow;
+                c += dCol;
+            }
+
+            Board[toRow][toCol] = piece;
+            PlayCaptureSound();
+            tryPromoteToKing(toRow, toCol, Board);
+
+            if (outMove) {
+                outMove->fromRow = fromRow;
+                outMove->fromCol = fromCol;
+                outMove->toRow = toRow;
+                outMove->toCol = toCol;
+                outMove->isCapture = 1;
+                outMove->flag = 1;
+                outMove->moreJumps = hasMoreJumps(toRow, toCol, piece, Board) ? 1 : 0;
+            }
+
+            if (hasMoreJumps(toRow, toCol, piece, Board)) {
+                *sPRow = toRow;
+                *sPCol = toCol;
+                *sPFlag = piece;
+            } else {
+                *sPRow = -1;
+                *sPCol = -1;
+                *sPFlag = EMPTY_BOX;
+                switchPlayer(playerTurn);
+            }
+        }
+    }
+}
+
+void applyMovePacket(int Board[BOARD_SIZE][BOARD_SIZE], MovePacket *move) {
+    int fromRow = move->fromRow;
+    int fromCol = move->fromCol;
+    int toRow = move->toRow;
+    int toCol = move->toCol;
+    int piece = Board[fromRow][fromCol];
+
+    // Clear original position
+    Board[fromRow][fromCol] = EMPTY_BOX;
+
+    // If it was a capture, remove opponent
+    if (move->isCapture) {
+        int dRow = (toRow > fromRow) ? 1 : -1;
+        int dCol = (toCol > fromCol) ? 1 : -1;
+        int r = fromRow + dRow;
+        int c = fromCol + dCol;
+
+        while (r != toRow && c != toCol) {
+            int midPiece = Board[r][c];
+
+            if ((piece == P1_PAWN || piece == P1_KING) && (midPiece == P2_PAWN || midPiece == P2_KING)) {
+                Board[r][c] = EMPTY_BOX;
+                break;
+            }
+            if ((piece == P2_PAWN || piece == P2_KING) && (midPiece == P1_PAWN || midPiece == P1_KING)) {
+                Board[r][c] = EMPTY_BOX;
+                break;
+            }
+
+            r += dRow;
+            c += dCol;
+        }
+        PlayCaptureSound();
+    } else {
+        PlayMoveSound();
+    }
+
+    // Place piece at destination
+    Board[toRow][toCol] = piece;
+
+    // Try king promotion
+    tryPromoteToKing(toRow, toCol, Board);
+}
 
 int checkWinCondition(int Board[BOARD_SIZE][BOARD_SIZE]) {
     int p1HasPieces = countPieces(1, Board);

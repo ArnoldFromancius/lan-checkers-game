@@ -134,7 +134,8 @@ int main(){
                         row = (mouse.y - offsetY) / cellSize;
                         log_info("\n#MAIN_FUNC selection made: X:%d Y:%d...",row,col);
                         //Logic for steps to take if a box is clicked
-                        boxClicked(row, col, &selectedPiece.flag, &selectedPiece.row, &selectedPiece.col, Board, &PlayerTurn);    
+                        MovePacket move; //only necessary for networking but is needed argument
+                        boxClicked(row, col, &selectedPiece.flag, &selectedPiece.row, &selectedPiece.col, Board, &PlayerTurn, &move);    
                          if(PlayerTurn == 1){turnStartTime = GetTime();}
                     }
                 }else if(PlayerTurn == 1){  //cpu turn
@@ -209,6 +210,7 @@ int main(){
             
             }else if(gameMode == 1){ //lan mode
                 
+                MovePacket move;
                 //if we are server
                 if(isServer){
                     log_info("ServerMode: connected to client...");
@@ -220,12 +222,16 @@ int main(){
                             row = (mouse.y - offsetY) / cellSize;
                             log_info("\n#MAIN_FUNC selection made: X:%d Y:%d...",row,col);
                             //Logic for steps to take if a box is clicked
-                            boxClicked(row, col, &selectedPiece.flag, &selectedPiece.row, &selectedPiece.col, Board, &PlayerTurn);
+                            move.flag = 0;
+                            boxClicked(row, col, &selectedPiece.flag, &selectedPiece.row, &selectedPiece.col, Board, &PlayerTurn, &move);
                             
                             //send updated board to client
-                            int sock = getSocketFD();
-                            sendBoard(sock, Board);
-
+                            if(move.flag){
+                                int sock = getSocketFD();
+                                sendMove(sock, &move);
+                                serverTurn = false;
+                            }
+                        
                             //check for game over
                             int winner = checkWinCondition(Board);
                             if (winner == 1 || winner == 2) {
@@ -260,12 +266,13 @@ int main(){
                             }
                             log_board_state(Board);   
                         }
-                        serverTurn = false;
 
                     }else if(!serverTurn){//Clients turn
                         //Receive updated board from client
                         int sock = getSocketFD();
-                        recvBoard(sock, Board);
+                        recvMove(sock, &move);
+                        applyMovePacket(Board, &move);
+                        switchPlayer(&PlayerTurn);
                         serverTurn = true;
                     }
                 }else{  //if we are client
@@ -277,10 +284,13 @@ int main(){
                     else if(serverTurn && !serverInitPlay){//Servers turn- every followup move
                         //Receive updated board from server
                         int sock = getSocketFD();
-                        recvBoard(sock, Board);
+                        recvMove(sock, &move);
+                        applyMovePacket(Board, &move);
+                        switchPlayer(&PlayerTurn);
                         serverTurn = false;
                     }
                     else if(!serverTurn){//Our turn
+                        move.flag=0;
                         //waiting for mouse click
                         if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)){
                             Vector2 mouse = GetMousePosition();
@@ -288,11 +298,13 @@ int main(){
                             row = (mouse.y - offsetY) / cellSize;
                             log_info("\n#MAIN_FUNC selection made: X:%d Y:%d...",row,col);
                             //Logic for steps to take if a box is clicked
-                            boxClicked(row, col, &selectedPiece.flag, &selectedPiece.row, &selectedPiece.col, Board, &PlayerTurn);
+                            boxClicked(row, col, &selectedPiece.flag, &selectedPiece.row, &selectedPiece.col, Board, &PlayerTurn, &move);
                             //send updated board to server
-                            int sock = getSocketFD();
-                            sendBoard(sock, Board);
-                            //PlayerTurn = 1;
+                            if(move.flag){
+                                int sock = getSocketFD();
+                                sendMove(sock, &move);
+                                serverTurn = true;
+                            }
 
                             //check for game over
                             int winner = checkWinCondition(Board);
@@ -328,7 +340,6 @@ int main(){
                             }
                             log_board_state(Board);   
                         }
-                        serverTurn = true;
                     }
                 }
                 //Display changes 

@@ -95,27 +95,20 @@ bool isClientConnected() {
     return clientConnected;
 }
 
-int sendBoard(int sock, int Board[8][8]) {
-    ssize_t bytesSent = send(sock, Board, sizeof(int) * 8 * 8, 0);
-    if (bytesSent != sizeof(int) * 8 * 8) {
-        perror("sendBoard: failed to send full board");
-        return -1;
-    }
-    return 0;
+int sendMove(int sockfd, MovePacket *move) {
+    ssize_t sent = send(sockfd, move, sizeof(MovePacket), 0);
+    return (sent == sizeof(MovePacket)) ? 0 : -1;
 }
 
-int recvBoard(int sock, int Board[8][8]) {
+int recvMove(int sockfd, MovePacket *move) {
     ssize_t totalReceived = 0;
-    ssize_t expected = sizeof(int) * 8 * 8;
-    char *buffer = (char *)Board;
+    char *buffer = (char *)move;
+    ssize_t expected = sizeof(MovePacket);
 
     while (totalReceived < expected) {
-        ssize_t bytes = recv(sock, buffer + totalReceived, expected - totalReceived, 0);
-        if (bytes <= 0) {
-            perror("recvBoard: failed to receive full board");
-            return -1;
-        }
-        totalReceived += bytes;
+        ssize_t received = recv(sockfd, buffer + totalReceived, expected - totalReceived, 0);
+        if (received <= 0) return -1;
+        totalReceived += received;
     }
     return 0;
 }

@@ -10,6 +10,7 @@
 #define BOARD_SIZE 8
 #define MAX_IP_LEN 32 //ip address
 
+#include "../include/networking.h"
 typedef enum {
     MENU_STATE,
     GAME_STATE,
@@ -33,7 +34,9 @@ void initCpu();
 
 void cpuMakeMove();
 
-void boxClicked(int row, int col, int *sPFlag, int *sPRow, int *sPCol, int Board[BOARD_SIZE][BOARD_SIZE], int *playerTurn);
+void boxClicked(int row, int col, int *sPFlag, int *sPRow, int *sPCol, int Board[BOARD_SIZE][BOARD_SIZE], int *playerTurn, MovePacket *outMove);
+
+void applyMovePacket(int Board[BOARD_SIZE][BOARD_SIZE], MovePacket *move);
 
 int checkWinCondition(int Board[BOARD_SIZE][BOARD_SIZE]);
 

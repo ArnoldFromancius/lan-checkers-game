@@ -181,12 +181,12 @@ int main(){
                 drawBoard(offsetX, offsetY, cellSize, row, col, Board);
                 drawPieces(offsetX, offsetY, cellSize, selectedPiece.row, selectedPiece.col, Board);
 
-                // --- TURN TEXT ---
+                // text for whos turn
                 const char* turnMsg = (PlayerTurn == 1) ? "PLAYER 1' TURN" : "PLAYER 2' TURN";
                 Color turnColor = (PlayerTurn == 1) ? BLUE : RED;
                 DrawText(turnMsg, 20, 20, 30, turnColor);
 
-                // --- TIMER BAR ---
+                // draw timer bar
                 float timeElapsed = GetTime() - turnStartTime;
                 float timeLeft = TURN_TIME_LIMIT - timeElapsed;
                 if (timeLeft < 0) timeLeft = 0;
@@ -201,7 +201,7 @@ int main(){
                 DrawRectangle(barX, barY, barWidth, barHeight, SKYBLUE);
                 DrawRectangleLines(barX, barY, barMaxWidth, barHeight, RAYWHITE);
 
-                //Draw timer text next to bar
+                //draw timer text next to bar
                 char timerText[64];
                 snprintf(timerText, sizeof(timerText), "Time: %.1fs", timeLeft);
                 DrawText(timerText, barX + barMaxWidth + 10, barY, 20, LIGHTGRAY);

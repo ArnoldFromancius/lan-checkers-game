@@ -6,14 +6,13 @@
 #include <stdbool.h>
 #include <sys/socket.h>
 #include <arpa/inet.h>
-#include <pthread.h>  // 🧵 added for threading
+#include <pthread.h>  
 
 static int sockfd = -1;
 static int serverSocket = -1;
 static pthread_t accept_thread;
 static bool clientConnected = false;
 
-// 🧵 Thread function to handle accept() without freezing UI
 void *acceptClientThread(void *arg) {
     int client = accept(serverSocket, NULL, NULL);
     if (client >= 0) {

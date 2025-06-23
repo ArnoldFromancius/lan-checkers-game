@@ -45,7 +45,7 @@ int simulateMove(int board[BOARD_SIZE][BOARD_SIZE], MoveChain move, int isJump) 
             }
         }
 
-        // Promote if needed
+        // Promote to king if needed
         if (piece == P1_PAWN && toY == BOARD_SIZE - 1)
             board[toY][toX] = P1_KING;
         else if (piece == P2_PAWN && toY == 0)

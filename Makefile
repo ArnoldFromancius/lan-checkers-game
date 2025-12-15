@@ -1,38 +1,65 @@
-#Compiler setup
+# ==============================
+# Compiler & Debugger Setup
+# ==============================
 CC = gcc
-#Debugger setup
 DD = gdb -tui
 
-# Detect Platform And Use Appropriate Flags
+# ==============================
+# Platform Detection
+# ==============================
 UNAME_S := $(shell uname -s)
 ifeq ($(UNAME_S), Linux)
-    CFLAGS = -g -lraylib -lm -lpthread -ldl -lrt -lX11 
+    PLATFORM = PLATFORM_DESKTOP
+    SYS_LIBS = -lm -lpthread -ldl -lrt -lX11 -lGL
 else ifeq ($(UNAME_S), Windows)
-    CFLAGS = -lraylib -lopengl32 -lgdi32 -lwinmm
+    PLATFORM = PLATFORM_DESKTOP
+    SYS_LIBS = -lopengl32 -lgdi32 -lwinmm
 endif
 
-#Setup Target
+# ==============================
+# Raylib Setup (auto fetch/build)
+# ==============================
+RAYLIB_DIR = external/raylib
+RAYLIB_SRC = $(RAYLIB_DIR)/src
+RAYLIB_LIB = $(RAYLIB_SRC)/libraylib.a
+CFLAGS = -I$(RAYLIB_SRC)
+LDFLAGS = $(RAYLIB_LIB) $(SYS_LIBS)
+
+# Clone and build Raylib if not found
+$(RAYLIB_LIB):
+	@echo ">>> Raylib not found, cloning and building locally..."
+	mkdir -p external
+	cd $(RAYLIB_SRC) && make PLATFORM=$(PLATFORM)
+
+# ==============================
+# Build Setup
+# ==============================
 TARGET = ./bin/game
 SRC = ./src/main.c ./src/render.c ./src/game_logic.c ./src/log.c ./src/audio.c ./src/networking.c ./src/cpu.c
 
-#Build Target
-$(TARGET): $(SRC)
-	$(CC) -o $(TARGET) $(SRC) $(CFLAGS)
+# ==============================
+# Build Rules
+# ==============================
+$(TARGET): $(SRC) $(RAYLIB_LIB)
+	@mkdir -p ./bin
+	$(CC) -o $(TARGET) $(SRC) $(CFLAGS) $(LDFLAGS)
 
+# ==============================
+# Commands
+# ==============================
+all: $(TARGET)
 
-#Initialize Target With Make Command
-all: 
-	$(TARGET)
-
-#Run Project
 run: $(TARGET)
 	./$(TARGET)
 
-#Cleanup Project
-clean: 
+clean:
 	rm -f $(TARGET)
+	if [ -d "$(RAYLIB_SRC)" ]; then \
+		cd $(RAYLIB_SRC) && make clean || true; \
+	fi
 
-#Debug Project 
 debug: $(TARGET)
 	$(DD) $(TARGET)
+
+.PHONY: all run clean debug
 

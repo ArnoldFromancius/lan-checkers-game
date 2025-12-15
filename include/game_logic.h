@@ -32,8 +32,6 @@ void initBoard(int [BOARD_SIZE][BOARD_SIZE]);
 
 void initCpu();
 
-void cpuMakeMove();
-
 void boxClicked(int row, int col, int *sPFlag, int *sPRow, int *sPCol, int Board[BOARD_SIZE][BOARD_SIZE], int *playerTurn, MovePacket *outMove);
 
 void applyMovePacket(int Board[BOARD_SIZE][BOARD_SIZE], MovePacket *move);

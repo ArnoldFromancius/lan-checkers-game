@@ -28,6 +28,20 @@ Debug logs are saved to `./debug/debug.log`.
 - A Linux system with `make` and `gcc`
 - [Raylib](https://www.raylib.com/) installed system-wide
 
+### To Install
+- git clone --recurse-submodules <your-repo-url>
+
+### Or if already cloned
+- git submodule update --init --recursive
+
+### Install Dependencies
+libx11-dev \
+    libxrandr-dev \
+    libxinerama-dev \
+    libxcursor-dev \
+    libxi-dev \
+    libgl1-mesa-dev
+
 ### Quick Start
 
 ```bash

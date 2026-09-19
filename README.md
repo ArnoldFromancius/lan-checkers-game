@@ -3,14 +3,14 @@
 
 A simple but functional Checkers (Draughts) game for Linux, featuring two gameplay modes:
 
-- 🧠 Single-player vs CPU  
-- 🌐 LAN Multiplayer (host or connect to a game on the same network)  
+- Single-player vs CPU  
+- LAN Multiplayer (host or connect to a game on the same network)  
 
-> ⚠️ This release targets **Linux only**. Windows support is planned for the next release.
+> This release targets **Linux only**. Windows support is planned for the next release.
 
 The game follows classic International Draughts rules, including pawn promotion to kings and multi-jump captures. Turns alternate between players with clear visual indication. In LAN mode, one player hosts and sees their local IP; the second player connects using that IP — both must be on the same network.
 
-## 🖱️ Controls
+## Controls
 
 | Action               | Key / Input   |
 |----------------------|----------------|
@@ -21,7 +21,7 @@ The game follows classic International Draughts rules, including pawn promotion 
 
 Debug logs are saved to `./debug/debug.log`.
 
-## 🛠️ Building & Running
+## Building & Running
 
 ### Requirements
 
@@ -55,7 +55,7 @@ make clean  # Clean build files
 make debug  # Run in GDB TUI mode
 ```
 
-## 📦 Dependency: Raylib
+## Dependency: Raylib
 
 Raylib is a lightweight C library for creating 2D/3D games. It handles:
 
@@ -71,20 +71,20 @@ sudo apt install libraylib-dev
 
 Or build from source: https://www.raylib.com/
 
-## 📅 Roadmap
+## Roadmap
 
-- ✅ CPU vs Player mode  
-- ✅ LAN multiplayer  
-- 🚧 Windows support  
-- 🚧 Improved AI  
-- 🚧 UI/UX and animations  
-- 🚧 Sound/music toggles in-game  
+- CPU vs Player mode  
+- LAN multiplayer  
+- Windows support  
+- Improved AI  
+- UI/UX and animations  
+- Sound/music toggles in-game  
 
-## 📝 License
+## License
 
 This project is released for educational/personal use. A formal license will be added in a future version.
 
-## 🧠 Author Notes
+## Author Notes
 
 This project was created as part of a learning journey in:
 
